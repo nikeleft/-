@@ -8,14 +8,15 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Κομποσκοίνι">
-    <meta name="display" content="standalone">
-
+    
     <link rel="apple-touch-icon" href="icon.png">
     <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
 
     <title>Ψηφιακὸν Κομποσκοίνι</title>
     <style>
         * { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        
         body { 
             background-color: #0f0f0f; 
             color: #d4af37; 
@@ -29,22 +30,86 @@
             overflow: hidden; 
             touch-action: manipulation; 
         }
-        #prayer-text { font-size: 1.9rem; text-align: center; margin-bottom: 20px; padding: 0 15px; min-height: 4.5rem; line-height: 1.3; color: #d4af37; font-weight: 500; }
-        .controls { margin-bottom: 20px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 12px; width: 88%; max-width: 300px; box-sizing: border-box; border: 1px solid rgba(212, 175, 55, 0.1); }
-        select, input[type="number"] { background: #1a1a1a; color: #d4af37; border: 1px solid #3d3d3d; padding: 12px; border-radius: 8px; outline: none; width: 100%; font-size: 1.1rem; font-family: inherit; }
-        .vibration-options { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
-        .vibration-toggle { display: flex; align-items: center; gap: 12px; font-size: 1rem; color: #999; cursor: pointer; position: relative; }
-        .vibration-toggle input { position: absolute; opacity: 0; }
-        .checkmark { height: 20px; width: 20px; border: 2px solid #d4af37; border-radius: 50%; display: inline-block; position: relative; }
-        .vibration-toggle input:checked ~ .checkmark:after { content: ""; position: absolute; top: 4px; left: 4px; width: 12px; height: 12px; border-radius: 50%; background: #d4af37; }
-        #bead-container { width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, #1a1a1a 0%, #000 100%); border: 2px solid #d4af37; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 40px rgba(0,0,0,0.9); transition: transform 0.05s ease; }
-        #bead-container:active { transform: scale(0.95); border-color: #ffffff; }
-        .classic-cross-svg { width: 90px; height: 110px; fill: #d4af37; margin-bottom: 2px; }
-        #current-count { font-size: 3.5rem; font-weight: bold; color: #d4af37; }
-        #target-display { font-size: 0.9rem; opacity: 0.6; letter-spacing: 1.5px; text-transform: uppercase; }
-        .goal-reached { border-color: #ffffff !important; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4) !important; }
-        #stats { margin-top: 25px; text-align: center; }
-        .reset-btn { background: transparent; border: 1px solid #444; color: #777; padding: 10px 22px; font-size: 0.9rem; border-radius: 8px; text-transform: uppercase; }
+
+        #prayer-text { 
+            font-size: 1.8rem; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            padding: 0 20px; 
+            min-height: 4.5rem; 
+            line-height: 1.3; 
+            color: #d4af37; 
+        }
+
+        .controls { 
+            margin-bottom: 25px; 
+            background: rgba(212, 175, 55, 0.05); 
+            padding: 15px; 
+            border-radius: 15px; 
+            width: 85%; 
+            max-width: 320px; 
+            border: 1px solid rgba(212, 175, 55, 0.15); 
+        }
+
+        select, input[type="number"] { 
+            background: #1a1a1a; 
+            color: #d4af37; 
+            border: 1px solid #3d3d3d; 
+            padding: 12px; 
+            border-radius: 10px; 
+            width: 100%; 
+            font-size: 1.1rem; 
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+
+        .vibration-options { display: flex; flex-direction: column; gap: 12px; margin-top: 5px; }
+        
+        .vibration-toggle { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 0.95rem; 
+            color: #aaa; 
+        }
+
+        #bead-container { 
+            width: 270px; 
+            height: 270px; 
+            border-radius: 50%; 
+            background: radial-gradient(circle, #1a1a1a 0%, #000 100%); 
+            border: 2px solid #d4af37; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
+            transition: transform 0.05s ease; 
+        }
+
+        #bead-container:active { transform: scale(0.96); border-color: #fff; }
+        
+        .cross-icon { width: 80px; height: 100px; fill: #d4af37; margin-bottom: 5px; }
+        
+        #current-count { font-size: 3.8rem; font-weight: bold; color: #d4af37; line-height: 1; }
+        
+        #target-label { font-size: 0.8rem; opacity: 0.5; letter-spacing: 2px; margin-top: 5px; }
+
+        .goal-reached { border-color: #fff !important; box-shadow: 0 0 60px rgba(212, 175, 55, 0.5) !important; }
+
+        #stats { margin-top: 30px; text-align: center; font-size: 0.9rem; opacity: 0.6; }
+
+        .reset-btn { 
+            margin-top: 15px;
+            background: transparent; 
+            border: 1px solid #444; 
+            color: #888; 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            text-transform: uppercase; 
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -52,86 +117,91 @@
     <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με</div>
 
     <div class="controls">
-        <select id="knot-select" onchange="handleSelectChange()">
+        <select id="knot-select" onchange="updateSettings()">
             <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
             <option value="300">300 κόμποι</option>
-            <option value="custom">Custom (ὁρίστε ἀριθμό)</option>
-            <option value="free">Ἐλεύθερο (χωρίς στόχο)</option>
+            <option value="custom">Επιλογή αριθμού</option>
+            <option value="free">Χωρίς στόχο</option>
         </select>
-        <input type="number" id="custom-input" style="display:none; margin-top:10px;" oninput="updateTarget()">
+        <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
 
         <div class="vibration-options">
             <label class="vibration-toggle">
-                <input type="radio" name="vib-mode" id="vib-every" checked> 
-                <span class="checkmark"></span>
-                <span>Δόνηση σὲ κάθε κόμπο</span>
+                <input type="radio" name="vib" id="vib-on" checked> Δόνηση σε κάθε κόμπο
             </label>
             <label class="vibration-toggle">
-                <input type="radio" name="vib-mode" id="vib-end"> 
-                <span class="checkmark"></span>
-                <span>Δόνηση μόνο στὸν τερματισμό</span>
+                <input type="radio" name="vib" id="vib-off"> Δόνηση μόνο στο τέλος
             </label>
         </div>
     </div>
 
     <div id="bead-container" onclick="countBead()">
-        <svg class="classic-cross-svg" viewBox="0 0 24 24"><path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z"/></svg>
+        <svg class="cross-icon" viewBox="0 0 24 24"><path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z"/></svg>
         <span id="current-count">33</span>
-        <span id="target-display">ΥΠΟΛΟΙΠΟ</span>
+        <span id="target-label">ΥΠΟΛΟΙΠΟ</span>
     </div>
 
     <div id="stats">
-        <div style="margin-bottom:10px; font-size: 1rem; opacity: 0.5;">
-            ΣΥΝΟΛΙΚΑ: <span id="total-count">0</span> | ΚΥΚΛΟΙ: <span id="cycle-count">0</span>
-        </div>
-        <button class="reset-btn" onclick="resetCounter()">Μηδενισμός</button>
+        ΣΥΝΟΛΟ: <span id="total">0</span> | ΚΥΚΛΟΙ: <span id="cycles">0</span><br>
+        <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
 
     <script>
-        let count=0, total=0, cycles=0, target=33, wakeLock=null;
+        let count = 0, total = 0, cycles = 0, target = 33, wakeLock = null;
 
-        document.addEventListener('touchstart', function() {
-            if (!wakeLock) {
-                if (navigator.vibrate) navigator.vibrate(5);
-                if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(w => wakeLock = w);
+        // Κλείδωμα οθόνης για να μην σβήνει
+        document.addEventListener('touchstart', async () => {
+            if (!wakeLock && 'wakeLock' in navigator) {
+                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
             }
-        }, {once: true}); 
+        }, { once: true });
 
-        function handleSelectChange() {
-            const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
+        function updateSettings() {
+            const s = document.getElementById('knot-select');
+            const c = document.getElementById('custom-input');
             c.style.display = (s.value === 'custom') ? 'block' : 'none';
-            target = (s.value === 'free') ? 0 : (s.value === 'custom') ? (parseInt(c.value) || 0) : parseInt(s.value);
-            resetCycle();
+            
+            if (s.value === 'free') target = 0;
+            else if (s.value === 'custom') target = parseInt(c.value) || 0;
+            else target = parseInt(s.value);
+            
+            resetCurrent();
         }
-
-        function updateTarget() { target = parseInt(document.getElementById('custom-input').value) || 0; resetCycle(); }
 
         function countBead() {
             count++; total++;
-            const e = document.getElementById('vib-every').checked;
+            const vibEvery = document.getElementById('vib-on').checked;
+
             if (navigator.vibrate) {
                 if (target > 0 && count === target) {
                     cycles++;
-                    let p = []; for(let i=0; i<cycles; i++) { p.push(300); if(i<cycles-1) p.push(150); }
-                    navigator.vibrate(p);
-                } else if (e) { navigator.vibrate([75]); }
+                    navigator.vibrate([300, 100, 300]); // Μεγάλη δόνηση στο τέλος
+                    document.getElementById('bead-container').classList.add('goal-reached');
+                } else if (vibEvery) {
+                    navigator.vibrate(60); // Μικρή δόνηση
+                }
             }
-            if (target > 0 && count === target) document.getElementById('bead-container').classList.add('goal-reached');
-            if (target > 0 && count > target) { resetCycle(); count = 1; }
-            updateDisplay();
+
+            if (target > 0 && count > target) {
+                count = 1;
+                document.getElementById('bead-container').classList.remove('goal-reached');
+            }
+            updateUI();
         }
 
-        function updateDisplay() {
-            document.getElementById('current-count').innerText = (target === 0) ? count : target - count;
-            document.getElementById('target-display').innerText = (target === 0) ? "ΕΛΕΥΘΕΡΟ" : "ΥΠΟΛΟΙΠΟ";
-            document.getElementById('total-count').innerText = total;
-            document.getElementById('cycle-count').innerText = cycles;
+        function updateUI() {
+            const display = document.getElementById('current-count');
+            display.innerText = (target === 0) ? count : (target - count < 0 ? 0 : target - count);
+            document.getElementById('target-label').innerText = (target === 0) ? "ΕΛΕΥΘΕΡΟ" : "ΥΠΟΛΟΙΠΟ";
+            document.getElementById('total').innerText = total;
+            document.getElementById('cycles').innerText = cycles;
         }
 
-        function resetCycle() { count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateDisplay(); }
-        function resetCounter() { total = 0; cycles = 0; resetCycle(); }
-        updateDisplay();
+        function resetCurrent() { count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
+        function resetAll() { total = 0; cycles = 0; resetCurrent(); }
+        
+        updateUI();
     </script>
 </body>
 </html>
