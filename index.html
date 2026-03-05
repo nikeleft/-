@@ -15,19 +15,24 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
-        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f0f0f; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.8s; }
-
-        /* Dim Overlay - Απόλυτο σκοτάδι */
-        #dim-overlay { 
+        /* Splash Screen με εικονίδιο */
+        #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 9000; display: none; 
+            background: #0f0f0f; display: flex; align-items: center; justify-content: center; 
+            z-index: 9999; transition: opacity 0.8s; 
         }
+        #splash-screen img { width: 120px; height: 120px; border-radius: 25px; box-shadow: 0 0 30px rgba(212,175,55,0.15); }
 
-        #prayer-area { width: 100%; text-align: center; padding-top: 20px; flex-shrink: 0; cursor: grab; }
+        /* Dim Overlay */
+        #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; }
+
+        /* Προσευχή - Διορθωμένη απόσταση */
+        #prayer-area { width: 100%; text-align: center; padding-top: 55px; padding-bottom: 10px; flex-shrink: 0; cursor: grab; }
         #prayer-text { font-size: 1.8rem; line-height: 1.2; min-height: 4.5rem; display: flex; align-items: center; justify-content: center; }
 
+        /* Dropdown Settings */
         .settings-container { 
-            width: 100%; max-width: 350px; margin: 10px auto; border: 1px solid #d4af37; 
+            width: 100%; max-width: 350px; margin: 5px auto 10px; border: 1px solid #d4af37; 
             border-radius: 15px; background: rgba(212, 175, 55, 0.05); overflow: hidden; z-index: 10;
         }
         #settings-toggle { 
@@ -35,7 +40,7 @@
             border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; font-family: inherit;
         }
         #settings-content { max-height: 0; overflow-y: auto; transition: max-height 0.3s ease-out; }
-        #settings-content.open { max-height: 60vh; padding: 15px; }
+        #settings-content.open { max-height: 50vh; padding: 15px; }
 
         select, input[type="number"], input[type="time"] { 
             background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 8px; border-radius: 8px; width: 100%; margin-bottom: 10px; text-align: center; font-size: 16px;
@@ -43,9 +48,10 @@
         .option-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; display: block; margin-bottom: 5px; text-align: center; }
         .toggle-row { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; margin-bottom: 4px; }
 
-        #main-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        /* Main Area */
+        #main-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
         #bead-container { 
-            width: 60vw; height: 60vw; max-width: 240px; max-height: 240px; border-radius: 50%; 
+            width: 58vw; height: 58vw; max-width: 230px; max-height: 230px; border-radius: 50%; 
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%); border: 2px solid #d4af37; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.8); transition: transform 0.05s;
@@ -53,14 +59,14 @@
         #bead-container:active { transform: scale(0.95); border-color: #fff; }
         #current-count { font-size: 3.5rem; font-weight: bold; line-height: 1; }
 
-        .dim-btn { background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.8rem; margin-top: 10px; }
-        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; margin-top: 5px; }
+        /* Κουμπιά εκτός μενού */
+        .dim-btn { background: #d4af37; color: #000; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 0.85rem; text-transform: uppercase; margin-top: 10px; }
+        .reset-btn { background: transparent; border: 1px solid rgba(212,175,55,0.5); color: #d4af37; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 0.75rem; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen"><h2 style="color:#d4af37">Κομποσκοίνι</h2></div>
-    
+    <div id="splash-screen"><img src="icon.png" alt="App Icon"></div>
     <div id="dim-overlay" onclick="countBead()"></div>
 
     <div id="prayer-area">
@@ -88,25 +94,23 @@
                 <div id="reminders-list" style="margin-top:5px;"></div>
             </div>
 
-            <span class="option-label">Ήχος</span>
-            <label class="toggle-row"><input type="checkbox" id="snd-on" onclick="onlyOne(this,'snd')"> Σε κάθε κόμπο</label>
-            <label class="toggle-row"><input type="checkbox" id="snd-off" onclick="onlyOne(this,'snd')"> Στον τερματισμό</label>
-
+            <span class="option-label">Ήχος & Δόνηση</span>
+            <label class="toggle-row"><input type="checkbox" id="snd-on" onclick="onlyOne(this,'snd')"> Ήχος σε κάθε κόμπο</label>
+            <label class="toggle-row"><input type="checkbox" id="snd-off" onclick="onlyOne(this,'snd')"> Μόνο στον τερματισμό</label>
             <div id="vib-section">
-                <span class="option-label" style="margin-top:10px;">Δόνηση</span>
-                <label class="toggle-row"><input type="checkbox" id="vib-on" onclick="onlyOne(this,'vib')"> Σε κάθε κόμπο</label>
-                <label class="toggle-row"><input type="checkbox" id="vib-off" onclick="onlyOne(this,'vib')"> Στον τερματισμό</label>
+                <label class="toggle-row"><input type="checkbox" id="vib-on" onclick="onlyOne(this,'vib')"> Δόνηση σε κάθε κόμπο</label>
             </div>
-
-            <button class="dim-btn" onclick="setDim(true)">Χαμηλός Φωτισμός (On)</button>
         </div>
     </div>
 
     <div id="main-area">
         <div id="bead-container" onclick="countBead()">
             <span id="current-count">33</span>
-            <span id="target-label" style="font-size:0.7rem; opacity:0.6; margin-top:5px;">ΥΠΟΛΟΙΠΟ</span>
+            <span style="font-size:0.7rem; opacity:0.6; margin-top:5px;">ΥΠΟΛΟΙΠΟ</span>
         </div>
+        
+        <button class="dim-btn" onclick="setDim(true)">Χαμηλός Φωτισμός</button>
+        
         <div style="text-align:center;">
             <div style="font-size:0.8rem; opacity:0.6;">ΣΥΝΟΛΟ: <span id="total">0</span></div>
             <button class="reset-btn" onclick="resetAll()">ΜΗΔΕΝΙΣΜΟΣ</button>
@@ -133,10 +137,8 @@
             document.getElementById('arrow').innerText = c.classList.contains('open') ? '▲' : '▼';
         }
 
-        // Λειτουργία Σκοταδιού
         function setDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
 
-        // Swipe για αλλαγή προσευχής ΚΑΙ για κλείσιμο Dimmer
         document.addEventListener('touchstart', e => { 
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
@@ -146,12 +148,12 @@
             let diffX = e.changedTouches[0].screenX - touchStartX;
             let diffY = e.changedTouches[0].screenY - touchStartY;
 
-            // Αν σύρει το δάχτυλο (πάνω από 50px), κλείνει το Dimmer
-            if (Math.abs(diffX) > 50 || Math.abs(diffY) > 50) {
+            // Οποιοδήποτε swipe κλείνει το Dimmer
+            if (Math.abs(diffX) > 40 || Math.abs(diffY) > 40) {
                 setDim(false);
                 
-                // Αν το σύρσιμο έγινε στην περιοχή της προσευχής, άλλαξε προσευχή
-                if (e.target.closest('#prayer-area')) {
+                // Swipe στην περιοχή προσευχής για αλλαγή
+                if (e.target.closest('#prayer-area') && Math.abs(diffX) > 50) {
                     pIndex = diffX > 0 ? (pIndex > 0 ? pIndex - 1 : prayers.length - 1) : (pIndex < prayers.length - 1 ? pIndex + 1 : 0);
                     document.getElementById('prayer-text').innerHTML = prayers[pIndex];
                 }
@@ -161,13 +163,13 @@
         if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) document.getElementById('vib-section').style.display = 'none';
 
         function onlyOne(checkbox, group) {
-            const list = group === 'snd' ? ['snd-on', 'snd-off'] : ['vib-on', 'vib-off'];
+            const list = group === 'snd' ? ['snd-on', 'snd-off'] : ['vib-on'];
             list.forEach(id => { if(document.getElementById(id) !== checkbox) document.getElementById(id).checked = false; });
         }
 
         function countBead() {
             const sOn = document.getElementById('snd-on').checked, sOff = document.getElementById('snd-off').checked;
-            const vOn = document.getElementById('vib-on').checked, vOff = document.getElementById('vib-off').checked;
+            const vOn = document.getElementById('vib-on')?.checked;
 
             if (mode === 'timer' && !timerInterval && timerSeconds > 0) {
                 timerInterval = setInterval(() => { timerSeconds--; if (timerSeconds <= 0) { clearInterval(timerInterval); updateUI(); } updateUI(); }, 1000);
@@ -178,7 +180,7 @@
                 count++;
                 if (target > 0 && count === target) {
                     if (sOn || sOff) { beadSound.currentTime = 0; beadSound.play().catch(()=>{}); }
-                    if (navigator.vibrate && (vOn || vOff)) navigator.vibrate([400, 200, 400]);
+                    if (navigator.vibrate && vOn) navigator.vibrate([400, 200, 400]);
                     count = 0;
                 } else {
                     if (sOn) { beadSound.currentTime = 0; beadSound.play().catch(()=>{}); }
@@ -216,7 +218,7 @@
 
         window.addEventListener('load', () => {
             renderReminders();
-            setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800); }, 1500);
+            setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800); }, 2000);
         });
         
         document.addEventListener('touchstart', () => { beadSound.play().then(()=>beadSound.pause()).catch(()=>{}); }, {once: true});
