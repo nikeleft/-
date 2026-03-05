@@ -6,7 +6,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="manifest" href="manifest.json">
 
     <title>Ψηφιακὸν Κομποσκοίνι</title>
     <style>
@@ -20,17 +19,17 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
-        /* SPLASH SCREEN FIX */
+        /* ΔΙΟΡΘΩΜΕΝΟ SPLASH SCREEN */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #0a0a0a; display: flex; align-items: center; justify-content: center; 
-            z-index: 999999; transition: opacity 0.6s ease-out; pointer-events: none;
+            background: #0a0a0a; 
+            display: flex; align-items: center; justify-content: center; 
+            z-index: 999999; transition: opacity 0.5s ease-out;
         }
-        #splash-icon {
-            width: 140px; height: 140px;
-            object-fit: contain;
-            display: block;
-            border-radius: 20%; /* Ελαφριά κλίση στις γωνίες */
+        .splash-logo {
+            width: 150px; height: 150px;
+            background: url('icon.png') no-repeat center center;
+            background-size: contain;
         }
 
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; display: none; }
@@ -80,7 +79,7 @@
 <body>
 
     <div id="splash-screen">
-        <img src="./icon.png" id="splash-icon" onerror="this.style.border='3px solid #d4af37';">
+        <div class="splash-logo"></div>
     </div>
 
     <div id="dim-overlay"></div>
@@ -128,14 +127,14 @@
         <input type="number" id="custom-input" style="display:none;" placeholder="Εἰσάγετε ἀριθμό..." oninput="updateSettings()">
         
         <label style="display:block; margin: 20px 0 10px;">Δόνηση</label>
-        <label class="vib-option">
+        <div class="vib-option">
             <input type="checkbox" id="vib-on" onchange="saveVib('on')"> 
             <span>Σὲ κάθε κόμπο</span>
-        </label>
-        <label class="vib-option">
+        </div>
+        <div class="vib-option">
             <input type="checkbox" id="vib-off" onchange="saveVib('off')"> 
             <span>Μόνο στον τερματισμό</span>
-        </label>
+        </div>
     </div>
 
     <div id="prayers-panel" class="panel">
@@ -148,20 +147,16 @@
     </div>
 
     <script>
-        // Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(e => console.log('SW Error'));
-        }
-
-        // Logic
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
         let target = parseInt(localStorage.getItem('target')) || 33;
         let targetType = localStorage.getItem('targetType') || 'knots';
+        
         const defaultPrayers = ["Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς", "Ἅγιε τοῦ Θεοῦ,<br>πρέσβευε ὑπὲρ ἡμῶν"];
         let prayers = JSON.parse(localStorage.getItem('my_prayers')) || [...defaultPrayers];
         let pIndex = 0;
+
         let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
 
         function saveState() {
@@ -191,7 +186,8 @@
         }
 
         function startTimer() {
-            if(!isPaused) return; isPaused = false;
+            if(!isPaused) return;
+            isPaused = false;
             startTime = Date.now();
             document.getElementById('pause-btn').innerText = "⏸";
             timerInterval = setInterval(() => {
@@ -203,7 +199,8 @@
         }
 
         function pauseTimer() {
-            if(isPaused) return; isPaused = true;
+            if(isPaused) return;
+            isPaused = true;
             elapsedAtPause += Date.now() - startTime;
             clearInterval(timerInterval);
             document.getElementById('pause-btn').innerText = "▶";
@@ -229,9 +226,11 @@
             localStorage.setItem('vib_off', vOff.checked);
         }
 
+        // ΧΩΡΙΣ ΕΡΩΤΗΣΗ RESET
         function resetAll() {
             count = 0; total = 0; cycles = 0; elapsedAtPause = 0;
-            pauseTimer(); document.getElementById('session-timer').innerText = "00:00:00";
+            pauseTimer(); 
+            document.getElementById('session-timer').innerText = "00:00:00";
             saveState(); updateUI();
         }
 
@@ -262,11 +261,11 @@
         }
 
         window.onload = () => {
-            // Το splash screen μένει για 1.2 δευτερόλεπτα για να προλάβει να φορτώσει η εικόνα
+            // Το Splash Screen φεύγει αυτόματα μετά από 1.5 δευτερόλεπτο
             setTimeout(() => {
-                document.getElementById('splash-screen').style.opacity='0';
-                setTimeout(() => document.getElementById('splash-screen').style.display='none', 600);
-            }, 1200);
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 500);
+            }, 1500);
 
             document.getElementById('prayer-text').innerHTML = prayers[0];
             document.getElementById('vib-on').checked = localStorage.getItem('vib_on') === 'true';
