@@ -6,7 +6,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0a0a0a">
-    
     <link rel="manifest" href="manifest.json">
 
     <title>Ψηφιακὸν Κομποσκοίνι</title>
@@ -57,8 +56,15 @@
         .nav-btn { background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; color: #d4af37; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; }
         input, select { background: #1a1a1a; color: #fff; border: 1px solid #d4af37; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 15px; font-family: inherit; font-size: 1rem; outline: none; }
         
+        /* Στοίχιση Δόνησης */
+        .vib-option { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
+        .vib-option input { width: 22px; height: 22px; margin: 0; cursor: pointer; }
+
         .info-bar { width: 100%; max-width: 380px; display: flex; justify-content: space-around; align-items: center; padding: 12px 0; border-top: 1px solid rgba(212, 175, 55, 0.1); font-size: 0.7rem; }
         .info-value { display: block; font-weight: bold; font-size: 0.95rem; color: #fff; margin-top: 4px; }
+
+        .timer-container { display: flex; align-items: center; gap: 8px; justify-content: center; }
+        #pause-btn { background: none; border: none; color: #d4af37; font-size: 1.2rem; cursor: pointer; padding: 0; }
 
         .reset-btn { background: transparent; border: 1px solid rgba(212,175,55,0.3); color: #d4af37; padding: 10px 25px; border-radius: 25px; font-size: 0.95rem; margin-top: 10px; font-weight: bold; cursor: pointer; }
         
@@ -88,7 +94,13 @@
         <div class="info-bar">
             <div style="text-align:center;">ΣΥΝΟΛΟ <span id="total" class="info-value">0</span></div>
             <div style="text-align:center;">ΚΥΚΛΟΙ <span id="cycles" class="info-value">0</span></div>
-            <div style="text-align:center;">ΧΡΟΝΟΣ <span id="session-timer" class="info-value">00:00:00</span></div>
+            <div style="text-align:center;">
+                ΧΡΟΝΟΣ 
+                <div class="timer-container">
+                    <span id="session-timer" class="info-value" style="margin:0;">00:00:00</span>
+                    <button id="pause-btn" onclick="toggleTimer(event)">⏸</button>
+                </div>
+            </div>
         </div>
         
         <button class="reset-btn" onclick="resetAll()">ΒΑΖΩ ΑΡΧΗ</button>
@@ -100,14 +112,21 @@
         <select id="knot-select" onchange="updateSettings()">
             <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
+            <option value="300">300 κόμποι</option>
             <option value="custom">Επιλογή κόμπων...</option>
-            <option value="free">Χωρίς στόχο</option>
+            <option value="free">Νά 'ναι εὐλογημένο</option>
         </select>
-        <input type="number" id="custom-input" style="display:none;" placeholder="Αριθμός κόμπων..." oninput="updateSettings()">
+        <input type="number" id="custom-input" style="display:none;" placeholder="Εἰσάγετε ἀριθμό..." oninput="updateSettings()">
         
         <label style="display:block; margin: 20px 0 10px;">Δόνηση</label>
-        <label style="display:flex; align-items:center; gap:10px; margin-bottom:15px;"><input type="checkbox" id="vib-on" onclick="saveVib('on')"> Σε κάθε κόμπο</label>
-        <label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="vib-off" onclick="saveVib('off')"> Μόνο στον τερματισμό</label>
+        <label class="vib-option">
+            <input type="checkbox" id="vib-on" onclick="saveVib('on')"> 
+            <span>Σὲ κάθε κόμπο</span>
+        </label>
+        <label class="vib-option">
+            <input type="checkbox" id="vib-off" onclick="saveVib('off')"> 
+            <span>Μόνο στον τερματισμό</span>
+        </label>
     </div>
 
     <div id="prayers-panel" class="panel">
@@ -120,26 +139,27 @@
     </div>
 
     <script>
-        // SERVICE WORKER REGISTRATION (Για την Εγκατάσταση)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {
-                // Fallback αν δεν υπάρχει το sw.js
                 navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs=');
             });
         }
 
-        // ΜΕΤΑΒΛΗΤΕΣ & STORAGE
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
         let target = parseInt(localStorage.getItem('target')) || 33;
         let targetType = localStorage.getItem('targetType') || 'knots';
         
-        const defaultPrayers = ["Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς"];
+        const defaultPrayers = [
+            "Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", 
+            "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς",
+            "Ἅγιε τοῦ Θεοῦ,<br>πρέσβευε ὑπὲρ ἡμῶν"
+        ];
         let prayers = JSON.parse(localStorage.getItem('my_prayers')) || [...defaultPrayers];
         let pIndex = 0;
 
-        let isPaused = true, startTime = null, elapsed = 0, timerInterval;
+        let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
 
         function saveState() {
             localStorage.setItem('count', count);
@@ -168,25 +188,44 @@
             document.getElementById('cycles').innerText = cycles;
         }
 
+        function toggleTimer(e) {
+            if(e) e.stopPropagation();
+            isPaused ? startTimer() : pauseTimer();
+        }
+
         function startTimer() {
             if(!isPaused) return;
-            isPaused = false; startTime = Date.now();
-            timerInterval = setInterval(() => {
-                let s = Math.floor((elapsed + (Date.now() - startTime)) / 1000);
-                let h = Math.floor(s/3600).toString().padStart(2,'0');
-                let m = Math.floor((s%3600)/60).toString().padStart(2,'0');
-                let sec = (s%60).toString().padStart(2,'0');
-                document.getElementById('session-timer').innerText = `${h}:${m}:${sec}`;
-            }, 1000);
+            isPaused = false;
+            startTime = Date.now();
+            document.getElementById('pause-btn').innerText = "⏸";
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+        }
+
+        function pauseTimer() {
+            if(isPaused) return;
+            isPaused = true;
+            elapsedAtPause += Date.now() - startTime;
+            clearInterval(timerInterval);
+            document.getElementById('pause-btn').innerText = "▶";
+        }
+
+        function updateTimerDisplay() {
+            let totalMs = elapsedAtPause + (Date.now() - startTime);
+            let s = Math.floor(totalMs / 1000);
+            let h = Math.floor(s/3600).toString().padStart(2,'0');
+            let m = Math.floor((s%3600)/60).toString().padStart(2,'0');
+            let sec = (s%60).toString().padStart(2,'0');
+            document.getElementById('session-timer').innerText = `${h}:${m}:${sec}`;
         }
 
         function updateSettings() {
             const s = document.getElementById('knot-select');
             const ci = document.getElementById('custom-input');
             targetType = 'knots';
-            if(s.value === 'free') target = 0;
+            if(s.value === 'free') { target = 0; ci.style.display = 'none'; }
             else if(s.value === 'custom') { ci.style.display = 'block'; target = parseInt(ci.value) || 33; }
             else { ci.style.display = 'none'; target = parseInt(s.value); }
+            count = 0;
             saveState();
             updateUI();
         }
@@ -205,7 +244,6 @@
 
         function resetAll() {
             if(confirm("Θέλετε να μηδενίσετε την πρόοδο;")) {
-                count = 0; total = 0; cycles = 0; elapsed = 0;
                 localStorage.clear();
                 location.reload();
             }
@@ -216,7 +254,6 @@
             if(show) startTimer();
         }
 
-        // Swipe για αλλαγή προσευχής & κλείσιμο σκότους
         let sX = 0;
         document.body.addEventListener('touchstart', e => sX = e.touches[0].clientX);
         document.body.addEventListener('touchend', e => {
@@ -234,12 +271,12 @@
 
         function addNewPrayer() {
             let val = document.getElementById('new-prayer-input').value;
-            if(val) { prayers.push(val); localStorage.setItem('my_prayers', JSON.stringify(prayers)); renderPrayers(); }
+            if(val) { prayers.push(val); localStorage.setItem('my_prayers', JSON.stringify(prayers)); renderPrayers(); document.getElementById('new-prayer-input').value=''; }
         }
 
         function renderPrayers() {
             document.getElementById('prayers-list-edit').innerHTML = prayers.map((p, i) => `
-                <div class="prayer-item"><span>${p}</span><button onclick="prayers.splice(${i},1);localStorage.setItem('my_prayers', JSON.stringify(prayers));renderPrayers();">✕</button></div>
+                <div class="prayer-item"><span>${p}</span><button style="background:none; border:none; color:red; font-size:1.2rem; cursor:pointer;" onclick="prayers.splice(${i},1);localStorage.setItem('my_prayers', JSON.stringify(prayers));renderPrayers();">✕</button></div>
             `).join('');
         }
 
@@ -248,7 +285,12 @@
             document.getElementById('prayer-text').innerHTML = prayers[0];
             document.getElementById('vib-on').checked = localStorage.getItem('vib_on') === 'true';
             document.getElementById('vib-off').checked = localStorage.getItem('vib_off') === 'true';
-            document.getElementById('knot-select').value = target === 0 ? 'free' : (target === 33 || target === 100 ? target : 'custom');
+            
+            let knotSel = document.getElementById('knot-select');
+            if(target === 0) knotSel.value = 'free';
+            else if([33, 100, 300].includes(target)) knotSel.value = target;
+            else { knotSel.value = 'custom'; document.getElementById('custom-input').style.display = 'block'; document.getElementById('custom-input').value = target; }
+            
             updateUI();
         };
     </script>
