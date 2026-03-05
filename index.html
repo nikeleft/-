@@ -20,15 +20,17 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
-        /* SPLASH SCREEN ΜΕ ΤΟ ΕΙΚΟΝΙΔΙΟ ΣΟΥ */
+        /* SPLASH SCREEN FIX */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #0a0a0a; display: flex; align-items: center; justify-content: center; 
-            z-index: 99999; transition: opacity 0.5s ease-out; pointer-events: none;
+            z-index: 999999; transition: opacity 0.6s ease-out; pointer-events: none;
         }
         #splash-icon {
-            width: 120px; height: 120px;
+            width: 140px; height: 140px;
             object-fit: contain;
+            display: block;
+            border-radius: 20%; /* Ελαφριά κλίση στις γωνίες */
         }
 
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; display: none; }
@@ -78,7 +80,7 @@
 <body>
 
     <div id="splash-screen">
-        <img src="icon.png" id="splash-icon" alt="App Icon">
+        <img src="./icon.png" id="splash-icon" onerror="this.style.border='3px solid #d4af37';">
     </div>
 
     <div id="dim-overlay"></div>
@@ -146,22 +148,20 @@
     </div>
 
     <script>
+        // Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(() => {
-                navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs=');
-            });
+            navigator.serviceWorker.register('sw.js').catch(e => console.log('SW Error'));
         }
 
+        // Logic
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
         let target = parseInt(localStorage.getItem('target')) || 33;
         let targetType = localStorage.getItem('targetType') || 'knots';
-        
         const defaultPrayers = ["Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς", "Ἅγιε τοῦ Θεοῦ,<br>πρέσβευε ὑπὲρ ἡμῶν"];
         let prayers = JSON.parse(localStorage.getItem('my_prayers')) || [...defaultPrayers];
         let pIndex = 0;
-
         let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
 
         function saveState() {
@@ -181,8 +181,7 @@
             } else if(localStorage.getItem('vib_on') === 'true') {
                 navigator.vibrate(50);
             }
-            saveState();
-            updateUI();
+            saveState(); updateUI();
         }
 
         function updateUI() {
@@ -191,35 +190,26 @@
             document.getElementById('cycles').innerText = cycles;
         }
 
-        function toggleTimer(e) {
-            if(e) e.stopPropagation();
-            isPaused ? startTimer() : pauseTimer();
-        }
-
         function startTimer() {
-            if(!isPaused) return;
-            isPaused = false;
+            if(!isPaused) return; isPaused = false;
             startTime = Date.now();
             document.getElementById('pause-btn').innerText = "⏸";
-            timerInterval = setInterval(updateTimerDisplay, 1000);
+            timerInterval = setInterval(() => {
+                let ms = elapsedAtPause + (Date.now() - startTime);
+                let s = Math.floor(ms / 1000);
+                document.getElementById('session-timer').innerText = 
+                    `${Math.floor(s/3600).toString().padStart(2,'0')}:${Math.floor((s%3600)/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+            }, 1000);
         }
 
         function pauseTimer() {
-            if(isPaused) return;
-            isPaused = true;
+            if(isPaused) return; isPaused = true;
             elapsedAtPause += Date.now() - startTime;
             clearInterval(timerInterval);
             document.getElementById('pause-btn').innerText = "▶";
         }
 
-        function updateTimerDisplay() {
-            let totalMs = elapsedAtPause + (Date.now() - startTime);
-            let s = Math.floor(totalMs / 1000);
-            let h = Math.floor(s/3600).toString().padStart(2,'0');
-            let m = Math.floor((s%3600)/60).toString().padStart(2,'0');
-            let sec = (s%60).toString().padStart(2,'0');
-            document.getElementById('session-timer').innerText = `${h}:${m}:${sec}`;
-        }
+        function toggleTimer(e) { e.stopPropagation(); isPaused ? startTimer() : pauseTimer(); }
 
         function updateSettings() {
             const s = document.getElementById('knot-select');
@@ -228,14 +218,11 @@
             if(s.value === 'free') { target = 0; ci.style.display = 'none'; }
             else if(s.value === 'custom') { ci.style.display = 'block'; target = parseInt(ci.value) || 33; }
             else { ci.style.display = 'none'; target = parseInt(s.value); }
-            count = 0;
-            saveState();
-            updateUI();
+            count = 0; saveState(); updateUI();
         }
 
         function saveVib(type) {
-            const vOn = document.getElementById('vib-on');
-            const vOff = document.getElementById('vib-off');
+            const vOn = document.getElementById('vib-on'), vOff = document.getElementById('vib-off');
             if(type === 'on' && vOn.checked) vOff.checked = false;
             if(type === 'off' && vOff.checked) vOn.checked = false;
             localStorage.setItem('vib_on', vOn.checked);
@@ -244,16 +231,11 @@
 
         function resetAll() {
             count = 0; total = 0; cycles = 0; elapsedAtPause = 0;
-            pauseTimer();
-            document.getElementById('session-timer').innerText = "00:00:00";
-            saveState();
-            updateUI();
+            pauseTimer(); document.getElementById('session-timer').innerText = "00:00:00";
+            saveState(); updateUI();
         }
 
-        function setDim(show) { 
-            document.getElementById('dim-overlay').style.display = show ? 'block' : 'none';
-            if(show) startTimer();
-        }
+        function setDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; if(show) startTimer(); }
 
         let sX = 0;
         document.body.addEventListener('touchstart', e => sX = e.touches[0].clientX);
@@ -269,35 +251,30 @@
         });
 
         function togglePanel(id) { document.getElementById(id).classList.toggle('open'); if(id==='prayers-panel') renderPrayers(); }
-
         function addNewPrayer() {
-            let val = document.getElementById('new-prayer-input').value;
-            if(val) { prayers.push(val); localStorage.setItem('my_prayers', JSON.stringify(prayers)); renderPrayers(); document.getElementById('new-prayer-input').value=''; }
+            let v = document.getElementById('new-prayer-input').value;
+            if(v) { prayers.push(v); localStorage.setItem('my_prayers', JSON.stringify(prayers)); renderPrayers(); document.getElementById('new-prayer-input').value=''; }
         }
-
         function renderPrayers() {
             document.getElementById('prayers-list-edit').innerHTML = prayers.map((p, i) => `
-                <div class="prayer-item"><span>${p}</span><button style="background:none; border:none; color:red; font-size:1.2rem; cursor:pointer;" onclick="prayers.splice(${i},1);localStorage.setItem('my_prayers', JSON.stringify(prayers));renderPrayers();">✕</button></div>
+                <div class="prayer-item"><span>${p}</span><button style="background:none; border:none; color:red;" onclick="prayers.splice(${i},1);localStorage.setItem('my_prayers', JSON.stringify(prayers));renderPrayers();">✕</button></div>
             `).join('');
         }
 
         window.onload = () => {
-            // Το splash screen φεύγει μετά από 1 δευτερόλεπτο
+            // Το splash screen μένει για 1.2 δευτερόλεπτα για να προλάβει να φορτώσει η εικόνα
             setTimeout(() => {
                 document.getElementById('splash-screen').style.opacity='0';
-                setTimeout(() => document.getElementById('splash-screen').style.display='none', 500);
-            }, 1000);
+                setTimeout(() => document.getElementById('splash-screen').style.display='none', 600);
+            }, 1200);
 
             document.getElementById('prayer-text').innerHTML = prayers[0];
             document.getElementById('vib-on').checked = localStorage.getItem('vib_on') === 'true';
             document.getElementById('vib-off').checked = localStorage.getItem('vib_off') === 'true';
-            
-            let knotSel = document.getElementById('knot-select');
-            let customInp = document.getElementById('custom-input');
-            if(target === 0) knotSel.value = 'free';
-            else if([33, 100, 300].includes(target)) knotSel.value = target;
-            else { knotSel.value = 'custom'; customInp.style.display = 'block'; customInp.value = target; }
-            
+            let ks = document.getElementById('knot-select'), ci = document.getElementById('custom-input');
+            if(target === 0) ks.value = 'free';
+            else if([33, 100, 300].includes(target)) ks.value = target;
+            else { ks.value = 'custom'; ci.style.display = 'block'; ci.value = target; }
             updateUI();
         };
     </script>
