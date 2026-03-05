@@ -22,7 +22,6 @@
         }
         #splash-screen img { width: 180px; height: 180px; border-radius: 40px; border: 1px solid #d4af37; }
 
-        /* Dim Overlay: Μέτρηση με κλικ, Κλείσιμο με Swipe */
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; display: none; }
 
         #prayer-area { width: 100%; text-align: center; padding-top: 40px; flex-shrink: 0; min-height: 110px; }
@@ -66,6 +65,12 @@
         #pause-btn { background: none; border: none; color: #d4af37; font-size: 1.1rem; cursor: pointer; }
 
         .bottom-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 5px; }
+        
+        .reset-btn { 
+            background: transparent; border: 1px solid rgba(212,175,55,0.3); color: #d4af37; 
+            padding: 8px 20px; border-radius: 25px; font-size: 0.85rem; margin-top: 10px; 
+            font-weight: bold; letter-spacing: 1px; opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +81,6 @@
 
     <div id="prayer-area">
         <div id="prayer-text">Φόρτωση...</div>
-        <div style="font-size: 0.6rem; opacity: 0.4; margin-top: 8px;">Σύρετε δεξιά/αριστερά για αλλαγή</div>
     </div>
 
     <div id="main-area">
@@ -86,7 +90,7 @@
         </div>
 
         <div class="bottom-nav">
-            <button class="nav-btn" onclick="togglePanel('settings-panel')">⚙ ΡΥΘΜΙΣΕΙΣ</button>
+            <button class="nav-btn" onclick="togglePanel('settings-panel')">⚙ ΚΑΝΟΝΑΣ</button>
             <button class="nav-btn" onclick="togglePanel('prayers-panel')">📖 ΠΡΟΣΕΥΧΕΣ</button>
             <button class="nav-btn" style="background: #000; font-size: 1.2rem; padding: 5px 15px;" onclick="setDim(true)">🌙</button>
         </div>
@@ -103,15 +107,15 @@
             </div>
         </div>
         
-        <button class="nav-btn" style="border:none; opacity:0.4; font-size:0.6rem;" onclick="resetAll()">ΜΗΔΕΝΙΣΜΟΣ</button>
+        <button class="reset-btn" onclick="resetAll()">ΒΑΖΩ ΑΡΧΗ</button>
     </div>
 
     <div id="settings-panel" class="panel">
         <div class="panel-header">
-            <h3 style="margin:0;">Ρυθμίσεις</h3>
+            <h3 style="margin:0;">Κανόνας</h3>
             <span class="close-panel" onclick="togglePanel('settings-panel')">✕</span>
         </div>
-        <label>Κανόνας Προσευχής</label>
+        <label>Τρόπος Προσευχής</label>
         <select id="knot-select" onchange="updateSettings()">
             <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
@@ -162,20 +166,12 @@
             if (id === 'prayers-panel') renderPrayerList();
         }
 
-        // DIM OVERLAY LOGIC
         const dimOverlay = document.getElementById('dim-overlay');
-        
-        dimOverlay.addEventListener('touchstart', e => {
-            dimStartX = e.touches[0].clientX;
-        });
-
+        dimOverlay.addEventListener('touchstart', e => { dimStartX = e.touches[0].clientX; });
         dimOverlay.addEventListener('touchend', e => {
             let diff = Math.abs(dimStartX - e.changedTouches[0].clientX);
-            if (diff > 40) { // Αν είναι swipe, κλείνει
-                setDim(false);
-            } else { // Αν είναι απλό πάτημα, μετράει
-                countBead();
-            }
+            if (diff > 40) setDim(false);
+            else countBead();
         });
 
         function setDim(show) { 
@@ -216,7 +212,6 @@
 
         function updatePrayerDisplay() { document.getElementById('prayer-text').innerHTML = prayers[pIndex] || ""; }
 
-        // Swipe for Prayers
         document.getElementById('prayer-area').addEventListener('touchstart', e => startX = e.touches[0].clientX);
         document.getElementById('prayer-area').addEventListener('touchend', e => {
             let diff = startX - e.changedTouches[0].clientX;
@@ -254,16 +249,13 @@
         function updateSessionUI() {
             let ms = elapsedBeforePause + (isPaused ? 0 : (Date.now() - startTime));
             let s = Math.floor(ms / 1000);
-            
-            // Έλεγχος αν ο στόχος είναι χρόνος
             if (targetType === 'time' && target > 0) {
                 let totalSecondsTarget = target * 60;
-                if (s >= totalSecondsTarget && s % totalSecondsTarget === 0) {
+                if (s > 0 && s % totalSecondsTarget === 0) {
                     cycles++;
                     navigator.vibrate([500, 200, 500]);
                 }
             }
-
             let h = Math.floor(s / 3600).toString().padStart(2, '0');
             let m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
             let sec = (s % 60).toString().padStart(2, '0');
@@ -284,10 +276,7 @@
         }
 
         function updateUI() {
-            let displayVal;
-            if (targetType === 'knots' && target > 0) displayVal = target - count;
-            else displayVal = total;
-            
+            let displayVal = (targetType === 'knots' && target > 0) ? (target - count) : total;
             document.getElementById('current-count').innerText = displayVal;
             document.getElementById('total').innerText = total;
             document.getElementById('cycles').innerText = cycles;
@@ -296,10 +285,7 @@
         function updateSettings() {
             const s = document.getElementById('knot-select'), ci = document.getElementById('custom-input');
             ci.style.display = (s.value === 'custom' || s.value === 'time') ? 'block' : 'none';
-            
-            if (s.value === 'time') targetType = 'time';
-            else targetType = 'knots';
-
+            targetType = (s.value === 'time') ? 'time' : 'knots';
             target = (s.value === 'free') ? 0 : (parseInt(ci.value) || parseInt(s.value) || 33);
             resetAll();
         }
