@@ -72,7 +72,7 @@
 </head>
 <body>
 
-    <div id="splash-screen"><h2 style="color:#d4af37;">†</h2></div>
+    <div id="splash-screen"></div>
     <div id="dim-overlay"></div>
 
     <div id="prayer-area">
@@ -138,14 +138,14 @@
     </div>
 
     <script>
-        // Service Worker
+        // Service Worker Logic
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {
                 navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs=');
             });
         }
 
-        // Φόρτωση Δεδομένων
+        // State Management
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
@@ -237,10 +237,19 @@
         }
 
         function resetAll() {
-            if(confirm("Θέλετε να μηδενίσετε την πρόοδο και τις ρυθμίσεις;")) {
-                localStorage.clear();
-                location.reload();
-            }
+            // Μηδενισμός αριθμών
+            count = 0;
+            total = 0;
+            cycles = 0;
+            elapsedAtPause = 0;
+            
+            // Παύση και μηδενισμός χρόνου
+            pauseTimer();
+            document.getElementById('session-timer').innerText = "00:00:00";
+            
+            // Αποθήκευση και Ενημέρωση UI
+            saveState();
+            updateUI();
         }
 
         function setDim(show) { 
@@ -248,7 +257,6 @@
             if(show) startTimer();
         }
 
-        // Swipes
         let sX = 0;
         document.body.addEventListener('touchstart', e => sX = e.touches[0].clientX);
         document.body.addEventListener('touchend', e => {
@@ -275,28 +283,25 @@
             `).join('');
         }
 
-        // Η ΚΑΡΔΙΑ ΤΗΣ ΜΝΗΜΗΣ: Φορτώνει τις ρυθμίσεις στα UI elements
         window.onload = () => {
-            setTimeout(() => document.getElementById('splash-screen').style.opacity='0', 500);
+            // Άμεση αφαίρεση του splash screen
+            document.getElementById('splash-screen').style.opacity='0';
+            setTimeout(() => document.getElementById('splash-screen').style.display='none', 500);
+
             document.getElementById('prayer-text').innerHTML = prayers[0];
             
-            // Φόρτωση Δόνησης
             document.getElementById('vib-on').checked = localStorage.getItem('vib_on') === 'true';
             document.getElementById('vib-off').checked = localStorage.getItem('vib_off') === 'true';
             
-            // Φόρτωση Κανόνα στο Select
             let knotSel = document.getElementById('knot-select');
             let customInp = document.getElementById('custom-input');
-            if(target === 0) {
-                knotSel.value = 'free';
-            } else if([33, 100, 300].includes(target)) {
-                knotSel.value = target;
-            } else {
-                knotSel.value = 'custom';
-                customInp.style.display = 'block';
-                customInp.value = target;
+            if(target === 0) { knotSel.value = 'free'; } 
+            else if([33, 100, 300].includes(target)) { knotSel.value = target; } 
+            else { 
+                knotSel.value = 'custom'; 
+                customInp.style.display = 'block'; 
+                customInp.value = target; 
             }
-            
             updateUI();
         };
     </script>
