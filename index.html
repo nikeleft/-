@@ -3,11 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Κομποσκοίνι">
+    
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+
     <title>Ψηφιακὸν Κομποσκοίνι</title>
     <style>
-        :root { --main-size: 1.1rem; }
         * { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         
         body { 
@@ -16,227 +22,234 @@
             font-family: 'Times New Roman', Times, serif; 
             display: flex; 
             flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
             height: 100vh; 
             margin: 0; 
             overflow: hidden; 
-            padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom) 10px;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
 
         #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: #0f0f0f; display: flex; align-items: center; justify-content: center;
             z-index: 9999; transition: opacity 0.8s ease;
         }
+        #splash-screen img { max-width: 70%; max-height: 70%; object-fit: contain; }
 
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; }
 
-        /* Πάνω μέρος: Προσευχή */
-        #prayer-display {
-            text-align: center;
-            padding: 15px 0;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
+        #prayer-text { font-size: 1.8rem; text-align: center; margin-bottom: 15px; line-height: 1.2; color: #d4af37; }
+
+        .controls { 
+            background: rgba(212, 175, 55, 0.05); 
+            padding: 15px; border-radius: 15px; 
+            width: 85%; max-width: 320px; 
+            border: 1px solid #d4af37; 
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 15px;
         }
 
-        /* Ρυθμίσεις Dropdown με Scroll */
-        .settings-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto 10px auto;
-            border: 1px solid #d4af37;
-            border-radius: 12px;
-            background: rgba(212, 175, 55, 0.05);
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #settings-toggle {
-            width: 100%; padding: 10px; background: rgba(212, 175, 55, 0.1);
-            color: #d4af37; border: none; font-family: inherit; font-weight: bold;
-            cursor: pointer; font-size: 1rem;
-        }
-
-        #settings-content {
-            max-height: 0;
-            overflow-y: auto; /* Επιτρέπει το σκρολάρισμα αν τα γράμματα είναι μεγάλα */
-            transition: max-height 0.3s ease-out;
-        }
-
-        #settings-content.open {
-            max-height: 60vh; /* Καταλαμβάνει έως το 60% της οθόνης αν χρειαστεί */
-            padding: 10px;
-        }
-
-        select, input { 
+        select, input[type="number"], input[type="time"] { 
             background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; 
-            padding: 8px; border-radius: 6px; width: 100%; margin-bottom: 8px;
-            text-align: center; font-family: inherit; font-size: var(--main-size);
+            padding: 10px; border-radius: 10px; width: 100%; 
+            font-size: 16px; margin-bottom: 10px; text-align: center; outline: none;
         }
 
-        .options-group { width: 100%; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid rgba(212,175,55,0.1); padding-bottom: 10px; }
-        .toggle { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: calc(var(--main-size) * 0.9); cursor: pointer; }
-
-        /* Κεντρική Περιοχή: Υπολογίζει τον υπόλοιπο χώρο */
-        #main-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-evenly; /* Μοιράζει τον χώρο ανάμεσα σε κύκλο και κουμπιά */
-            width: 100%;
-            min-height: 0;
-        }
+        .options-group { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px; }
+        .option-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; letter-spacing: 1px; }
+        .toggle { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; cursor: pointer; width: 100%; margin-bottom: 4px; }
+        
+        input[type="checkbox"] { accent-color: #d4af37; transform: scale(1.2); }
 
         #bead-container { 
-            width: 220px; height: 220px; border-radius: 50%; 
+            width: 230px; height: 230px; border-radius: 50%; 
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%); 
-            border: 2px solid #d4af37; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; 
-            box-shadow: 0 5px 25px rgba(0,0,0,0.7); transition: transform 0.05s;
+            border: 2px solid #d4af37; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); transition: transform 0.05s ease; 
         }
-        #bead-container:active { transform: scale(0.96); }
+        #bead-container:active { transform: scale(0.95); border-color: #fff; }
 
-        #current-count { font-size: 3rem; font-weight: bold; }
-        #target-label { font-size: 0.7rem; opacity: 0.6; }
+        .cross-icon { width: 60px; height: 80px; fill: #d4af37; margin-bottom: 5px; }
+        #current-count { font-size: 3.2rem; font-weight: bold; line-height: 1; }
+        #target-label { font-size: 0.7rem; opacity: 0.6; letter-spacing: 1px; margin-top: 5px; text-align: center; }
 
-        .dim-btn { background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.9rem; }
-        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 10px 25px; border-radius: 20px; font-size: 1rem; cursor: pointer; }
+        .dim-btn { background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; }
+        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 6px 15px; border-radius: 20px; margin-top: 10px; font-size: 0.75rem; cursor: pointer; }
+        .goal-reached { border-color: #fff !important; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4) !important; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen"><h2 style="color:#d4af37">Κομποσκοίνι</h2></div>
+    <div id="splash-screen"><img src="icon.png" alt="Logo"></div>
     <div id="dim-overlay" onclick="countBead()" ontouchmove="handleSwipe(event)"></div>
 
-    <div id="prayer-display">
-        <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με</div>
+    <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με</div>
+
+    <div class="controls">
+        <select id="knot-select" onchange="updateSettings()">
+            <option value="33">33 κόμποι</option>
+            <option value="100">100 κόμποι</option>
+            <option value="custom">Επιλογή κόμπων</option>
+            <option value="timer">Χρόνος (λεπτά)</option>
+            <option value="free">Χωρίς στόχο</option>
+        </select>
+        <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
+
+        <div class="options-group">
+            <span class="option-label">Υπενθύμιση Προσευχής</span>
+            <input type="time" id="reminder-time" onchange="setReminder()">
+        </div>
+
+        <div class="options-group">
+            <span class="option-label">Ρυθμίσεις Ήχου</span>
+            <label class="toggle"><input type="checkbox" id="snd-on" onclick="onlyOne(this, 'snd')"> <span>Ήχος σε κάθε κόμπο</span></label>
+            <label class="toggle"><input type="checkbox" id="snd-off" onclick="onlyOne(this, 'snd')"> <span>Μόνο στον τερματισμό</span></label>
+        </div>
+
+        <div id="vibration-section" class="options-group">
+            <span class="option-label">Ρυθμίσεις Δόνησης</span>
+            <label class="toggle"><input type="checkbox" id="vib-on" onclick="onlyOne(this, 'vib')"> <span>Δόνηση σε κάθε κόμπο</span></label>
+            <label class="toggle"><input type="checkbox" id="vib-off" onclick="onlyOne(this, 'vib')"> <span>Μόνο στον τερματισμό</span></label>
+        </div>
+
+        <button class="dim-btn" onclick="toggleDim(true)">Χαμηλός Φωτισμός</button>
     </div>
 
-    <div class="settings-container">
-        <button id="settings-toggle" onclick="toggleSettings()">⚙ ΡΥΘΜΙΣΕΙΣ <span id="arrow">▼</span></button>
-        <div id="settings-content">
-            <select id="knot-select" onchange="updateSettings()">
-                <option value="33">33 κόμποι</option>
-                <option value="100">100 κόμποι</option>
-                <option value="custom">Επιλογή κόμπων</option>
-                <option value="timer">Χρόνος (λεπτά)</option>
-                <option value="free">Χωρίς στόχο</option>
-            </select>
-            <input type="number" id="custom-input" style="display:none;" oninput="updateSettings()">
-
-            <select id="font-select" onchange="updateFontSize()">
-                <option value="1.1rem">Γράμματα: Κανονικά</option>
-                <option value="1.4rem">Γράμματα: Μεγάλα</option>
-                <option value="1.7rem">Γράμματα: Πολύ Μεγάλα</option>
-            </select>
-
-            <div class="options-group">
-                <label class="toggle"><input type="checkbox" id="snd-on" onclick="onlyOne(this, 'snd')"> <span>Ήχος σε κάθε κόμπο</span></label>
-                <label class="toggle"><input type="checkbox" id="snd-off" onclick="onlyOne(this, 'snd')"> <span>Ήχος στον τερματισμό</span></label>
-            </div>
-
-            <div id="vibration-section" class="options-group">
-                <label class="toggle"><input type="checkbox" id="vib-on" onclick="onlyOne(this, 'vib')"> <span>Δόνηση σε κάθε κόμπο</span></label>
-                <label class="toggle"><input type="checkbox" id="vib-off" onclick="onlyOne(this, 'vib')"> <span>Δόνηση στον τερματισμό</span></label>
-            </div>
-
-            <button class="dim-btn" onclick="toggleDim(true)">Χαμηλός Φωτισμός</button>
-        </div>
+    <div id="bead-container" onclick="countBead()">
+        <svg class="cross-icon" viewBox="0 0 24 24"><path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z"/></svg>
+        <span id="current-count">33</span>
+        <span id="target-label">ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ</span>
     </div>
 
-    <div id="main-area">
-        <div id="bead-container" onclick="countBead()">
-            <span id="current-count">33</span>
-            <span id="target-label">ΥΠΟΛΟΙΠΟ</span>
-        </div>
-        
-        <div style="text-align:center;">
-            <button class="reset-btn" onclick="resetAll()">ΜΗΔΕΝΙΣΜΟΣ</button>
-            <div style="margin-top:5px; font-size:0.8rem; opacity:0.6;">ΣΥΝΟΛΟ: <span id="total">0</span></div>
-        </div>
+    <div style="text-align:center; margin-top:10px; font-size:0.8rem;">
+        ΣΥΝΟΛΟ: <span id="total">0</span><br>
+        <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
 
     <audio id="bead-sound" src="click.mp3" preload="auto"></audio>
 
     <script>
-        let count = 0, total = 0, target = 33, mode = 'knots', timerSeconds = 0, timerInterval = null;
+        let count = 0, total = 0, target = 33, mode = 'knots', timerSeconds = 0, timerInterval = null, touchStartY = 0;
         const beadSound = document.getElementById('bead-sound');
 
-        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) document.getElementById('vibration-section').style.display = 'none';
+        const isiPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isiPhone) { document.getElementById('vibration-section').style.display = 'none'; }
 
-        function toggleSettings() {
-            const content = document.getElementById('settings-content');
-            content.classList.toggle('open');
-            document.getElementById('arrow').innerText = content.classList.contains('open') ? '▲' : '▼';
-        }
+        // Λειτουργία Υπενθύμισης
+        function setReminder() {
+            const time = document.getElementById('reminder-time').value;
+            if (!time) return;
 
-        function updateFontSize() {
-            const size = document.getElementById('font-select').value;
-            document.documentElement.style.setProperty('--main-size', size);
-            document.getElementById('prayer-display').style.fontSize = `calc(${size} * 1.5)`;
-            // Διορθώνει το layout σε περίπτωση που το scroll έμεινε σε περίεργη θέση
-            window.scrollTo(0,0);
+            if (!("Notification" in window)) {
+                alert("Το πρόγραμμα περιήγησης δεν υποστηρίζει ειδοποιήσεις.");
+                return;
+            }
+
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    alert("Η υπενθύμιση ορίστηκε για τις " + time);
+                } else {
+                    alert("Πρέπει να επιτρέψετε τις ειδοποιήσεις από τις ρυθμίσεις του κινητού.");
+                }
+            });
         }
 
         function onlyOne(checkbox, group) {
             const checkboxes = (group === 'snd') ? [document.getElementById('snd-on'), document.getElementById('snd-off')] : [document.getElementById('vib-on'), document.getElementById('vib-off')];
-            checkboxes.forEach((item) => { if (item !== checkbox) item.checked = false; });
+            checkboxes.forEach((item) => {
+                if (item !== checkbox) item.checked = false;
+            });
         }
 
-        function playSound() { beadSound.currentTime = 0; beadSound.play().catch(()=>{}); }
+        function playSoundEffect() {
+            beadSound.currentTime = 0;
+            beadSound.play().catch(() => {});
+        }
 
         window.addEventListener('load', () => {
-            setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 600); }, 1500);
-            updateFontSize();
+            setTimeout(() => { 
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800);
+            }, 2500);
         });
 
+        function toggleDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
+        function handleSwipe(e) { if (Math.abs(touchStartY - e.touches[0].clientY) > 60) toggleDim(false); }
+        
+        document.addEventListener('touchstart', (e) => { 
+            touchStartY = e.touches[0].clientY; 
+            beadSound.play().then(() => { beadSound.pause(); }).catch(() => {});
+        }, {passive:true});
+
+        function updateSettings() {
+            const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
+            clearInterval(timerInterval); timerInterval = null;
+            if (s.value === 'timer') {
+                mode = 'timer'; c.style.display = 'block'; 
+                target = parseInt(c.value) || 0; timerSeconds = target * 60;
+            } else {
+                mode = 'knots'; c.style.display = (s.value === 'custom') ? 'block' : 'none';
+                target = (s.value === 'free') ? 0 : (s.value === 'custom' ? (parseInt(c.value) || 0) : parseInt(s.value));
+            }
+            resetCurrent();
+        }
+
         function countBead() {
-            const sOn = document.getElementById('snd-on').checked, sOff = document.getElementById('snd-off').checked;
-            const vOn = document.getElementById('vib-on').checked, vOff = document.getElementById('vib-off').checked;
-            
+            const sOn = document.getElementById('snd-on').checked;
+            const sOff = document.getElementById('snd-off').checked;
+            const vOn = document.getElementById('vib-on').checked;
+            const vOff = document.getElementById('vib-off').checked;
+
             if (mode === 'timer' && !timerInterval && timerSeconds > 0) {
-                timerInterval = setInterval(() => { timerSeconds--; if (timerSeconds <= 0) { clearInterval(timerInterval); finish(); } updateUI(); }, 1000);
+                timerInterval = setInterval(() => {
+                    timerSeconds--; if (timerSeconds <= 0) { clearInterval(timerInterval); finishSession(); }
+                    updateUI();
+                }, 1000);
             }
 
             total++;
             if (mode === 'knots') {
                 count++;
                 if (target > 0 && count === target) {
-                    if (sOn || sOff) playSound();
+                    if (sOn || sOff) playSoundEffect();
                     if (navigator.vibrate && (vOn || vOff)) navigator.vibrate([400, 200, 400]);
                     document.getElementById('bead-container').classList.add('goal-reached');
                 } else {
-                    if (sOn) playSound();
+                    if (sOn) playSoundEffect();
                     if (navigator.vibrate && vOn) navigator.vibrate(60);
                 }
                 if (target > 0 && count > target) { count = 1; document.getElementById('bead-container').classList.remove('goal-reached'); }
-            } else { if (sOn) playSound(); if (navigator.vibrate && vOn) navigator.vibrate(60); }
+            } else {
+                if (sOn) playSoundEffect();
+                if (navigator.vibrate && vOn) navigator.vibrate(60);
+            }
             updateUI();
         }
 
-        function resetAll() { total = 0; clearInterval(timerInterval); timerInterval = null; count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
+        function finishSession() {
+            if (document.getElementById('snd-on').checked || document.getElementById('snd-off').checked) playSoundEffect();
+            if (navigator.vibrate && (document.getElementById('vib-on').checked || document.getElementById('vib-off').checked)) navigator.vibrate([400, 200, 400]);
+            document.getElementById('bead-container').classList.add('goal-reached');
+        }
+
         function updateUI() {
-            const d = document.getElementById('current-count');
-            d.innerText = (mode === 'knots') ? (target === 0 ? total : Math.max(0, target - count)) : `${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}`;
+            const d = document.getElementById('current-count'), l = document.getElementById('target-label');
+            if (mode === 'knots') {
+                d.innerText = (target === 0) ? total : Math.max(0, target - count);
+                l.innerText = (target === 0) ? "ΣΥΝΟΛΟ" : "ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ";
+            } else {
+                d.innerText = `${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}`;
+                l.innerText = "ΥΠΟΛΟΙΠΟ ΧΡΟΝΟΥ";
+            }
             document.getElementById('total').innerText = total;
         }
 
-        function updateSettings() {
-            const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
-            mode = s.value === 'timer' ? 'timer' : 'knots';
-            c.style.display = (s.value === 'custom' || s.value === 'timer') ? 'block' : 'none';
-            target = (s.value === 'free') ? 0 : (s.value === 'custom' ? parseInt(c.value)||0 : parseInt(s.value));
-            if(mode === 'timer') timerSeconds = (parseInt(c.value)||0)*60;
-            resetAll();
-        }
-
-        function toggleDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
-        document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; beadSound.play().then(()=>beadSound.pause()).catch(()=>{}); }, {passive:true});
-        function handleSwipe(e) { if (Math.abs(touchStartY - e.touches[0].clientY) > 60) toggleDim(false); }
+        function resetCurrent() { count = 0; if (mode === 'timer') timerSeconds = (parseInt(document.getElementById('custom-input').value) || 0) * 60; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
+        function resetAll() { total = 0; clearInterval(timerInterval); timerInterval = null; resetCurrent(); }
+        updateUI();
     </script>
 </body>
 </html>
