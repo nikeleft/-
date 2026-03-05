@@ -42,7 +42,6 @@
             z-index: 9999;
             transition: opacity 0.8s ease;
         }
-
         #splash-screen img { max-width: 80%; max-height: 80%; object-fit: contain; }
 
         #dim-overlay {
@@ -80,16 +79,7 @@
             outline: none;
         }
 
-        .vibration-toggle { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 0.95rem; 
-            color: #d4af37; 
-            margin-top: 8px;
-            cursor: pointer;
-        }
-
+        .vibration-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #d4af37; margin-top: 8px; cursor: pointer; }
         input[type="radio"] { accent-color: #d4af37; transform: scale(1.2); }
 
         #bead-container { 
@@ -100,7 +90,6 @@
             cursor: pointer; box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
             transition: transform 0.05s ease; 
         }
-
         #bead-container:active { transform: scale(0.96); border-color: #fff; }
         .cross-icon { width: 70px; height: 90px; fill: #d4af37; margin-bottom: 5px; }
         #current-count { font-size: 3.5rem; font-weight: bold; color: #d4af37; line-height: 1; }
@@ -121,17 +110,14 @@
         }
 
         #stats { margin-top: 20px; text-align: center; font-size: 0.9rem; color: #d4af37; }
-        #timer-display { font-size: 1.2rem; margin-bottom: 5px; font-weight: bold; opacity: 0.9; }
+        #timer-display { font-size: 1.1rem; margin-bottom: 5px; font-weight: bold; opacity: 0.9; }
         .reset-btn { margin-top: 10px; background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; font-size: 0.8rem; cursor: pointer; }
-        
         .goal-reached { border-color: #fff !important; box-shadow: 0 0 60px rgba(212, 175, 55, 0.5) !important; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <img src="icon.png" alt="Splash Icon">
-    </div>
+    <div id="splash-screen"><img src="icon.png" alt="Splash Icon"></div>
 
     <div id="dim-overlay" onclick="countBead()" ontouchmove="handleSwipe(event)"></div>
 
@@ -148,12 +134,8 @@
         <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
 
         <div class="vibration-options">
-            <label class="vibration-toggle">
-                <input type="radio" name="vib" id="vib-on" checked> Δόνηση σε κάθε κόμπο
-            </label>
-            <label class="vibration-toggle">
-                <input type="radio" name="vib" id="vib-off"> Μόνο στον τερματισμό
-            </label>
+            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-on" checked> Δόνηση σε κάθε κόμπο</label>
+            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-off"> Μόνο στον τερματισμό</label>
         </div>
         
         <button class="dim-btn" onclick="toggleDim(true)">Χαμηλός Φωτισμός</button>
@@ -166,7 +148,7 @@
     </div>
 
     <div id="stats">
-        <div id="timer-display">Χρόνος: 00:00</div>
+        <div id="timer-display">Διάρκεια: 0 λεπτά</div>
         ΣΥΝΟΛΟ: <span id="total">0</span> | ΚΥΚΛΟΙ: <span id="cycles">0</span><br>
         <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
@@ -174,10 +156,7 @@
     <script>
         let count = 0, total = 0, cycles = 0, target = 33, wakeLock = null;
         let touchStartY = 0;
-        
-        // Timer variables
-        let startTime, timerInterval;
-        let timerRunning = false;
+        let startTime, timerInterval, timerRunning = false;
 
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -206,7 +185,7 @@
         function startTimer() {
             if (!timerRunning) {
                 startTime = Date.now();
-                timerInterval = setInterval(updateTimer, 1000);
+                timerInterval = setInterval(updateTimer, 10000); // Check every 10s for efficiency
                 timerRunning = true;
             }
         }
@@ -215,15 +194,10 @@
             const now = Date.now();
             const diff = now - startTime;
             const mins = Math.floor(diff / 60000);
-            const secs = Math.floor((diff % 60000) / 1000);
-            document.getElementById('timer-display').innerText = 
-                `Χρόνος: ${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            document.getElementById('timer-display').innerText = `Διάρκεια: ${mins} λεπτά`;
         }
 
-        function stopTimer() {
-            clearInterval(timerInterval);
-            timerRunning = false;
-        }
+        function stopTimer() { clearInterval(timerInterval); timerRunning = false; }
 
         function updateSettings() {
             const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
@@ -233,8 +207,7 @@
         }
 
         function countBead() {
-            if (total === 0) startTimer(); // Start timer on first tap
-            
+            if (total === 0) startTimer();
             count++; total++;
             const vibEvery = document.getElementById('vib-on').checked;
 
@@ -269,13 +242,10 @@
         function resetCurrent() { count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
         
         function resetAll() { 
-            total = 0; 
-            cycles = 0; 
-            stopTimer();
-            document.getElementById('timer-display').innerText = "Χρόνος: 00:00";
+            total = 0; cycles = 0; stopTimer();
+            document.getElementById('timer-display').innerText = "Διάρκεια: 0 λεπτά";
             resetCurrent(); 
         }
-        
         updateUI();
     </script>
 </body>
