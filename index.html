@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>Ψηφιακὸν Κομποσκοίνι</title>
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Ψηφιακὸν Κομποσκοίνι</title>
+    <meta name="apple-mobile-web-app-title" content="Κομποσκοίνι">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#0a0a0a">
+
     <style>
         * { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
         
@@ -17,6 +23,7 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
+        /* Splash Screen */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #0f0f0f; display: flex; align-items: center; justify-content: center; 
@@ -27,9 +34,10 @@
 
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; }
 
-        #prayer-area { width: 100%; text-align: center; padding-top: 55px; padding-bottom: 10px; flex-shrink: 0; }
+        #prayer-area { width: 100%; text-align: center; padding-top: 50px; padding-bottom: 10px; flex-shrink: 0; }
         #prayer-text { font-size: 1.6rem; line-height: 1.3; min-height: 5rem; display: flex; align-items: center; justify-content: center; padding: 0 10px; color: #d4af37; }
 
+        /* Settings UI */
         .settings-container { 
             width: 100%; max-width: 350px; margin: 5px auto 10px; border: 1px solid #d4af37; 
             border-radius: 15px; background: rgba(0, 0, 0, 0.96); backdrop-filter: blur(15px); overflow: hidden; z-index: 10;
@@ -48,7 +56,7 @@
         }
         #settings-content.open { 
             max-height: 70vh; 
-            padding: 20px 15px 80px 15px; 
+            padding: 20px 15px 100px 15px; /* Unlimited scroll space */
         }
 
         input[type="text"], select, input[type="number"] { 
@@ -64,6 +72,7 @@
         .prayer-item { display: flex; justify-content: space-between; align-items: center; background: rgba(212,175,55,0.07); padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; border: 1px solid rgba(212,175,55,0.3); color: #d4af37; }
         .del-btn { color: #ff4444; font-weight: bold; padding: 5px 10px; cursor: pointer; font-size: 1.2rem; }
 
+        /* Counter Area */
         #main-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
         #bead-container { 
             width: 58vw; height: 58vw; max-width: 210px; max-height: 210px; border-radius: 50%; 
@@ -90,6 +99,7 @@
     <div class="settings-container">
         <button id="settings-toggle" onclick="toggleSettings()">⚙ ΡΥΘΜΙΣΕΙΣ <span id="arrow">▼</span></button>
         <div id="settings-content">
+            
             <div class="section-box">
                 <span class="option-label">Κανόνας</span>
                 <select id="knot-select" onchange="updateSettings()">
@@ -99,7 +109,7 @@
                     <option value="timer">Χρόνος (λεπτά)</option>
                     <option value="free">Χωρίς στόχο</option>
                 </select>
-                <input type="number" id="custom-input" style="display:none;" placeholder="Εισάγετε τιμή..." oninput="updateSettings()">
+                <input type="number" id="custom-input" style="display:none;" placeholder="Τιμή..." oninput="updateSettings()">
             </div>
 
             <div class="section-box">
@@ -133,6 +143,11 @@
     </div>
 
     <script>
+        // Service Worker Registration for PWA Installation
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+
         let count = 0, total = 0, target = 33, mode = 'knots', timerSeconds = 0, timerInterval = null, cycles = 0;
         let pIndex = 0, touchStartX = 0, touchStartY = 0;
         
@@ -167,13 +182,14 @@
         function savePrayers() { localStorage.setItem('my_prayers', JSON.stringify(prayers)); }
         function setDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
 
+        // Swipe Navigation
         document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
         document.addEventListener('touchend', e => {
             let diffX = e.changedTouches[0].screenX - touchStartX;
             let diffY = e.changedTouches[0].screenY - touchStartY;
-            if (Math.abs(diffX) > 40 || Math.abs(diffY) > 40) {
+            if (Math.abs(diffX) > 50 && Math.abs(diffY) < 100) {
                 setDim(false);
-                if (e.target.closest('#prayer-area') && Math.abs(diffX) > 50) {
+                if (e.target.closest('#prayer-area') || e.target.closest('#main-area')) {
                     pIndex = diffX > 0 ? (pIndex > 0 ? pIndex - 1 : prayers.length - 1) : (pIndex < prayers.length - 1 ? pIndex + 1 : 0);
                     updatePrayerDisplay();
                 }
@@ -187,12 +203,13 @@
             list.forEach(id => { if(document.getElementById(id) !== checkbox) document.getElementById(id).checked = false; });
         }
 
+        // Cycle-based Vibration Logic
         function multiVibrate(times) {
             if (!navigator.vibrate) return;
             let pattern = [];
             for(let i=0; i<times; i++) {
-                pattern.push(400); // Δόνηση
-                if(i < times - 1) pattern.push(200); // Παύση ανάμεσα
+                pattern.push(400); // Vibrate
+                if(i < times - 1) pattern.push(200); // Gap
             }
             navigator.vibrate(pattern);
         }
