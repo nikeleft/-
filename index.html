@@ -31,88 +31,52 @@
             touch-action: manipulation; 
         }
 
-        #prayer-text { 
-            font-size: 1.8rem; 
-            text-align: center; 
-            margin-bottom: 20px; 
-            padding: 0 20px; 
-            min-height: 4.5rem; 
-            line-height: 1.3; 
-            color: #d4af37; 
+        /* SPLASH SCREEN STYLE */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #0f0f0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
         }
 
-        .controls { 
-            margin-bottom: 25px; 
-            background: rgba(212, 175, 55, 0.05); 
-            padding: 15px; 
-            border-radius: 15px; 
-            width: 85%; 
-            max-width: 320px; 
-            border: 1px solid rgba(212, 175, 55, 0.15); 
-        }
+        #splash-screen svg { width: 100px; height: 120px; fill: #d4af37; margin-bottom: 20px; }
+        #splash-screen h1 { font-size: 1.5rem; letter-spacing: 2px; }
 
-        select, input[type="number"] { 
-            background: #1a1a1a; 
-            color: #d4af37; 
-            border: 1px solid #3d3d3d; 
-            padding: 12px; 
-            border-radius: 10px; 
-            width: 100%; 
-            font-size: 1.1rem; 
-            font-family: inherit;
-            margin-bottom: 10px;
-        }
-
-        .vibration-options { display: flex; flex-direction: column; gap: 12px; margin-top: 5px; }
-        
-        .vibration-toggle { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 0.95rem; 
-            color: #aaa; 
-        }
+        #prayer-text { font-size: 1.8rem; text-align: center; margin-bottom: 20px; padding: 0 20px; min-height: 4.5rem; line-height: 1.3; color: #d4af37; }
+        .controls { margin-bottom: 25px; background: rgba(212, 175, 55, 0.05); padding: 15px; border-radius: 15px; width: 85%; max-width: 320px; border: 1px solid rgba(212, 175, 55, 0.15); }
+        select, input[type="number"] { background: #1a1a1a; color: #d4af37; border: 1px solid #3d3d3d; padding: 12px; border-radius: 10px; width: 100%; font-size: 1.1rem; font-family: inherit; margin-bottom: 10px; }
+        .vibration-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #aaa; margin-top: 5px; }
 
         #bead-container { 
-            width: 270px; 
-            height: 270px; 
-            border-radius: 50%; 
+            width: 270px; height: 270px; border-radius: 50%; 
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%); 
             border: 2px solid #d4af37; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            cursor: pointer; box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
             transition: transform 0.05s ease; 
         }
 
         #bead-container:active { transform: scale(0.96); border-color: #fff; }
-        
         .cross-icon { width: 80px; height: 100px; fill: #d4af37; margin-bottom: 5px; }
-        
         #current-count { font-size: 3.8rem; font-weight: bold; color: #d4af37; line-height: 1; }
-        
         #target-label { font-size: 0.8rem; opacity: 0.5; letter-spacing: 2px; margin-top: 5px; }
-
         .goal-reached { border-color: #fff !important; box-shadow: 0 0 60px rgba(212, 175, 55, 0.5) !important; }
-
         #stats { margin-top: 30px; text-align: center; font-size: 0.9rem; opacity: 0.6; }
-
-        .reset-btn { 
-            margin-top: 15px;
-            background: transparent; 
-            border: 1px solid #444; 
-            color: #888; 
-            padding: 8px 20px; 
-            border-radius: 20px; 
-            text-transform: uppercase; 
-            font-size: 0.8rem;
-        }
+        .reset-btn { margin-top: 15px; background: transparent; border: 1px solid #444; color: #888; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; font-size: 0.8rem; }
     </style>
 </head>
 <body>
+
+    <div id="splash-screen">
+        <svg viewBox="0 0 24 24"><path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z"/></svg>
+        <h1>ΚΟΜΠΟΣΚΟΙΝΙ</h1>
+    </div>
 
     <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με</div>
 
@@ -150,7 +114,15 @@
     <script>
         let count = 0, total = 0, cycles = 0, target = 33, wakeLock = null;
 
-        // Κλείδωμα οθόνης για να μην σβήνει
+        // ΚΡΥΨΙΜΟ SPLASH SCREEN ΜΕΤΑ ΑΠΟ 3 ΔΕΥΤΕΡΟΛΕΠΤΑ
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }, 3000);
+        });
+
         document.addEventListener('touchstart', async () => {
             if (!wakeLock && 'wakeLock' in navigator) {
                 try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
@@ -158,14 +130,9 @@
         }, { once: true });
 
         function updateSettings() {
-            const s = document.getElementById('knot-select');
-            const c = document.getElementById('custom-input');
+            const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
             c.style.display = (s.value === 'custom') ? 'block' : 'none';
-            
-            if (s.value === 'free') target = 0;
-            else if (s.value === 'custom') target = parseInt(c.value) || 0;
-            else target = parseInt(s.value);
-            
+            target = (s.value === 'free') ? 0 : (s.value === 'custom' ? (parseInt(c.value) || 0) : parseInt(s.value));
             resetCurrent();
         }
 
@@ -176,10 +143,16 @@
             if (navigator.vibrate) {
                 if (target > 0 && count === target) {
                     cycles++;
-                    navigator.vibrate([300, 100, 300]); // Μεγάλη δόνηση στο τέλος
+                    // ΔΟΝΗΣΗ ΑΝΑΛΟΓΑ ΜΕ ΤΟΝ ΚΥΚΛΟ (π.χ. 2 φορές στον 2ο κύκλο)
+                    let pattern = [];
+                    for(let i=0; i < cycles; i++) {
+                        pattern.push(300); // Δόνηση 300ms
+                        if(i < cycles - 1) pattern.push(200); // Παύση 200ms ανάμεσα
+                    }
+                    navigator.vibrate(pattern);
                     document.getElementById('bead-container').classList.add('goal-reached');
                 } else if (vibEvery) {
-                    navigator.vibrate(60); // Μικρή δόνηση
+                    navigator.vibrate(60);
                 }
             }
 
@@ -191,8 +164,7 @@
         }
 
         function updateUI() {
-            const display = document.getElementById('current-count');
-            display.innerText = (target === 0) ? count : (target - count < 0 ? 0 : target - count);
+            document.getElementById('current-count').innerText = (target === 0) ? count : (target - count < 0 ? 0 : target - count);
             document.getElementById('target-label').innerText = (target === 0) ? "ΕΛΕΥΘΕΡΟ" : "ΥΠΟΛΟΙΠΟ";
             document.getElementById('total').innerText = total;
             document.getElementById('cycles').innerText = cycles;
@@ -200,7 +172,6 @@
 
         function resetCurrent() { count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
         function resetAll() { total = 0; cycles = 0; resetCurrent(); }
-        
         updateUI();
     </script>
 </body>
