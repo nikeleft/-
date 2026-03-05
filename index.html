@@ -40,32 +40,42 @@
 
         #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9000; display: none; }
 
-        #prayer-text { font-size: 1.8rem; text-align: center; margin-bottom: 15px; line-height: 1.2; color: #d4af37; }
+        /* Το κείμενο της προσευχής με δυναμικό μέγεθος */
+        #prayer-text { 
+            font-size: 1.8rem; 
+            text-align: center; 
+            margin-bottom: 10px; 
+            line-height: 1.2; 
+            color: #d4af37; 
+            min-height: 4.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
 
         .controls { 
             background: rgba(212, 175, 55, 0.05); 
-            padding: 15px; border-radius: 15px; 
-            width: 85%; max-width: 320px; 
+            padding: 12px; border-radius: 15px; 
+            width: 88%; max-width: 340px; 
             border: 1px solid #d4af37; 
             display: flex; flex-direction: column; align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         select, input[type="number"] { 
             background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; 
-            padding: 10px; border-radius: 10px; width: 100%; 
-            font-size: 16px; margin-bottom: 10px; text-align: center; outline: none;
+            padding: 8px; border-radius: 8px; width: 100%; 
+            font-size: 16px; margin-bottom: 8px; text-align: center; outline: none;
         }
 
-        .options-group { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 5px; margin-bottom: 10px; }
-        .option-label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.6; margin-bottom: 4px; letter-spacing: 1px; }
-        .toggle { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; cursor: pointer; width: 100%; margin-bottom: 4px; }
-        
-        /* Στυλ για τα Checkboxes ώστε να μοιάζουν με επιλογές */
-        input[type="checkbox"] { accent-color: #d4af37; transform: scale(1.2); }
+        .options-group { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 8px; }
+        .option-label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.6; margin-bottom: 2px; letter-spacing: 1px; }
+        .toggle { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; cursor: pointer; width: 100%; }
+        input[type="checkbox"] { accent-color: #d4af37; transform: scale(1.1); }
 
         #bead-container { 
-            width: 230px; height: 230px; border-radius: 50%; 
+            width: 220px; height: 220px; border-radius: 50%; 
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%); 
             border: 2px solid #d4af37; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
@@ -73,12 +83,12 @@
         }
         #bead-container:active { transform: scale(0.95); border-color: #fff; }
 
-        .cross-icon { width: 60px; height: 80px; fill: #d4af37; margin-bottom: 5px; }
-        #current-count { font-size: 3.2rem; font-weight: bold; line-height: 1; }
-        #target-label { font-size: 0.7rem; opacity: 0.6; letter-spacing: 1px; margin-top: 5px; text-align: center; }
+        .cross-icon { width: 55px; height: 75px; fill: #d4af37; margin-bottom: 5px; }
+        #current-count { font-size: 3rem; font-weight: bold; line-height: 1; }
+        #target-label { font-size: 0.65rem; opacity: 0.6; letter-spacing: 1px; margin-top: 5px; text-align: center; }
 
-        .dim-btn { background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; font-size: 0.8rem; }
-        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 6px 15px; border-radius: 20px; margin-top: 10px; font-size: 0.75rem; cursor: pointer; }
+        .dim-btn { background: #d4af37; color: #000; border: none; padding: 10px; border-radius: 20px; font-weight: bold; width: 100%; text-transform: uppercase; cursor: pointer; font-size: 0.75rem; }
+        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 5px 12px; border-radius: 20px; margin-top: 8px; font-size: 0.7rem; cursor: pointer; }
         .goal-reached { border-color: #fff !important; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4) !important; }
     </style>
 </head>
@@ -87,7 +97,9 @@
     <div id="splash-screen"><img src="icon.png" alt="Logo"></div>
     <div id="dim-overlay" onclick="countBead()" ontouchmove="handleSwipe(event)"></div>
 
-    <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με</div>
+    <div id="prayer-text">
+        <div>Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με</div>
+    </div>
 
     <div class="controls">
         <select id="knot-select" onchange="updateSettings()">
@@ -98,6 +110,12 @@
             <option value="free">Χωρίς στόχο</option>
         </select>
         <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
+
+        <select id="font-select" onchange="updateFontSize()">
+            <option value="1.8rem">Γράμματα: Κανονικά</option>
+            <option value="2.3rem">Γράμματα: Μεγάλα</option>
+            <option value="2.8rem">Γράμματα: Πολύ Μεγάλα</option>
+        </select>
 
         <div class="options-group">
             <span class="option-label">Ρυθμίσεις Ήχου</span>
@@ -120,7 +138,7 @@
         <span id="target-label">ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ</span>
     </div>
 
-    <div style="text-align:center; margin-top:10px; font-size:0.8rem;">
+    <div style="text-align:center; margin-top:8px; font-size:0.75rem;">
         ΣΥΝΟΛΟ: <span id="total">0</span><br>
         <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
@@ -134,12 +152,15 @@
         const isiPhone = /iPhone|iPad|iPod/i.test(navigator.userAgent);
         if (isiPhone) { document.getElementById('vibration-section').style.display = 'none'; }
 
-        // Συνάρτηση που επιτρέπει μόνο μία επιλογή ή καμία
+        // Αλλαγή μεγέθους γραμματοσειράς
+        function updateFontSize() {
+            const size = document.getElementById('font-select').value;
+            document.getElementById('prayer-text').style.fontSize = size;
+        }
+
         function onlyOne(checkbox, group) {
             const checkboxes = (group === 'snd') ? [document.getElementById('snd-on'), document.getElementById('snd-off')] : [document.getElementById('vib-on'), document.getElementById('vib-off')];
-            checkboxes.forEach((item) => {
-                if (item !== checkbox) item.checked = false;
-            });
+            checkboxes.forEach((item) => { if (item !== checkbox) item.checked = false; });
         }
 
         function playSoundEffect() {
