@@ -59,11 +59,14 @@
         .controls { 
             margin-bottom: 20px; 
             background: rgba(212, 175, 55, 0.05); 
-            padding: 15px; 
+            padding: 20px 15px; 
             border-radius: 15px; 
             width: 85%; 
             max-width: 320px; 
             border: 1px solid #d4af37; 
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Κεντράρισμα όλων των στοιχείων */
         }
 
         select, input[type="number"] { 
@@ -75,12 +78,32 @@
             width: 100%; 
             font-size: 1.1rem; 
             font-family: inherit; 
-            margin-bottom: 10px; 
+            margin-bottom: 12px; 
             outline: none;
+            text-align: center;
         }
 
-        .vibration-toggle { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #d4af37; margin-top: 8px; cursor: pointer; }
-        input[type="radio"] { accent-color: #d4af37; transform: scale(1.2); }
+        .vibration-options {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Κεντράρισμα των radio buttons */
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .vibration-toggle { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; /* Κεντράρισμα περιεχομένου toggle */
+            gap: 10px; 
+            font-size: 0.95rem; 
+            color: #d4af37; 
+            cursor: pointer;
+            width: 100%;
+        }
+
+        input[type="radio"] { accent-color: #d4af37; transform: scale(1.3); margin: 0; }
 
         #bead-container { 
             width: 250px; height: 250px; border-radius: 50%; 
@@ -93,7 +116,7 @@
         #bead-container:active { transform: scale(0.96); border-color: #fff; }
         .cross-icon { width: 70px; height: 90px; fill: #d4af37; margin-bottom: 5px; }
         #current-count { font-size: 3.5rem; font-weight: bold; color: #d4af37; line-height: 1; }
-        #target-label { font-size: 0.8rem; color: #d4af37; opacity: 0.6; letter-spacing: 2px; margin-top: 5px; }
+        #target-label { font-size: 0.8rem; color: #d4af37; opacity: 0.6; letter-spacing: 2px; margin-top: 5px; text-align: center; }
 
         .dim-btn {
             background: #d4af37;
@@ -102,15 +125,14 @@
             padding: 12px 20px;
             border-radius: 20px;
             font-weight: bold;
-            margin-top: 10px;
             width: 100%;
             font-family: inherit;
             text-transform: uppercase;
             font-size: 0.9rem;
+            cursor: pointer;
         }
 
         #stats { margin-top: 20px; text-align: center; font-size: 0.9rem; color: #d4af37; }
-        #timer-display { font-size: 1.1rem; margin-bottom: 5px; font-weight: bold; opacity: 0.9; }
         .reset-btn { margin-top: 10px; background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; font-size: 0.8rem; cursor: pointer; }
         .goal-reached { border-color: #fff !important; box-shadow: 0 0 60px rgba(212, 175, 55, 0.5) !important; }
     </style>
@@ -128,14 +150,22 @@
             <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
             <option value="300">300 κόμποι</option>
-            <option value="custom">Επιλογή αριθμού</option>
+            <option value="custom">Επιλογή κόμπων</option>
+            <option value="timer">Χρόνος (λεπτά)</option>
             <option value="free">Χωρίς στόχο</option>
         </select>
+        
         <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
 
         <div class="vibration-options">
-            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-on"> Δόνηση σε κάθε κόμπο</label>
-            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-off"> Μόνο στον τερματισμό</label>
+            <label class="vibration-toggle">
+                <input type="radio" name="vib" id="vib-on"> 
+                <span>Δόνηση σε κάθε κόμπο</span>
+            </label>
+            <label class="vibration-toggle">
+                <input type="radio" name="vib" id="vib-off"> 
+                <span>Μόνο στον τερματισμό</span>
+            </label>
         </div>
         
         <button class="dim-btn" onclick="toggleDim(true)">Χαμηλός Φωτισμός</button>
@@ -144,19 +174,17 @@
     <div id="bead-container" onclick="countBead()">
         <svg class="cross-icon" viewBox="0 0 24 24"><path d="M10 2h4v5h5v4h-5v11h-4v-11h-5v-4h5z"/></svg>
         <span id="current-count">33</span>
-        <span id="target-label">ΥΠΟΛΟΙΠΟ</span>
+        <span id="target-label">ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ</span>
     </div>
 
     <div id="stats">
-        <div id="timer-display">Διάρκεια: 0 λεπτά</div>
-        ΣΥΝΟΛΟ: <span id="total">0</span> | ΚΥΚΛΟΙ: <span id="cycles">0</span><br>
+        ΣΥΝΟΛΟ ΚΟΜΠΩΝ: <span id="total">0</span><br>
         <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
 
     <script>
-        let count = 0, total = 0, cycles = 0, target = 33, wakeLock = null;
-        let touchStartY = 0;
-        let startTime, timerInterval, timerRunning = false;
+        let count = 0, total = 0, target = 33, wakeLock = null;
+        let mode = 'knots', timerSeconds = 0, timerInterval = null, touchStartY = 0;
 
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -173,84 +201,68 @@
             }
         }, { passive: false });
 
-        function toggleDim(show) {
-            document.getElementById('dim-overlay').style.display = show ? 'block' : 'none';
-        }
-
-        function handleSwipe(e) {
-            let touchEndY = e.touches[0].clientY;
-            if (Math.abs(touchStartY - touchEndY) > 50) toggleDim(false);
-        }
-
-        function startTimer() {
-            if (!timerRunning) {
-                startTime = Date.now();
-                timerInterval = setInterval(updateTimer, 10000);
-                timerRunning = true;
-            }
-        }
-
-        function updateTimer() {
-            const now = Date.now();
-            const diff = now - startTime;
-            const mins = Math.floor(diff / 60000);
-            document.getElementById('timer-display').innerText = `Διάρκεια: ${mins} λεπτά`;
-        }
-
-        function stopTimer() { clearInterval(timerInterval); timerRunning = false; }
+        function toggleDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
+        function handleSwipe(e) { if (Math.abs(touchStartY - e.touches[0].clientY) > 50) toggleDim(false); }
 
         function updateSettings() {
             const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
-            c.style.display = (s.value === 'custom') ? 'block' : 'none';
-            target = (s.value === 'free') ? 0 : (s.value === 'custom' ? (parseInt(c.value) || 0) : parseInt(s.value));
+            clearInterval(timerInterval); timerInterval = null;
+            if (s.value === 'timer') {
+                mode = 'timer'; c.style.display = 'block'; c.placeholder = "Λεπτά...";
+                target = parseInt(c.value) || 0; timerSeconds = target * 60;
+            } else {
+                mode = 'knots'; c.style.display = (s.value === 'custom') ? 'block' : 'none';
+                c.placeholder = "Αριθμός κόμπων...";
+                target = (s.value === 'free') ? 0 : (s.value === 'custom' ? (parseInt(c.value) || 0) : parseInt(s.value));
+            }
             resetCurrent();
         }
 
+        function startTimer() {
+            if (mode === 'timer' && !timerInterval && timerSeconds > 0) {
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    if (timerSeconds <= 0) { clearInterval(timerInterval); finishSession(); }
+                    updateUI();
+                }, 1000);
+            }
+        }
+
+        function finishSession() {
+            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+            document.getElementById('bead-container').classList.add('goal-reached');
+        }
+
         function countBead() {
-            if (total === 0) startTimer();
-            count++; total++;
-            
-            const vibEvery = document.getElementById('vib-on').checked;
-            const vibEnd = document.getElementById('vib-off').checked;
-
-            if (navigator.vibrate) {
-                if (target > 0 && count === target) {
-                    // Αν είναι επιλεγμένο είτε το "Every" είτε το "End", κάνει τη δόνηση κύκλου
-                    if (vibEvery || vibEnd) {
-                        cycles++;
-                        let pattern = [];
-                        for(let i=0; i < cycles; i++) {
-                            pattern.push(300); if(i < cycles - 1) pattern.push(200);
-                        }
-                        navigator.vibrate(pattern);
-                        document.getElementById('bead-container').classList.add('goal-reached');
-                    }
-                } else if (vibEvery) {
-                    navigator.vibrate(60);
+            if (mode === 'timer') startTimer();
+            total++;
+            if (mode === 'knots') {
+                count++;
+                const vOn = document.getElementById('vib-on').checked, vOff = document.getElementById('vib-off').checked;
+                if (navigator.vibrate) {
+                    if (target > 0 && count === target) {
+                        if (vOn || vOff) finishSession();
+                    } else if (vOn) { navigator.vibrate(60); }
                 }
-            }
-
-            if (target > 0 && count > target) {
-                count = 1;
-                document.getElementById('bead-container').classList.remove('goal-reached');
-            }
+                if (target > 0 && count > target) { count = 1; document.getElementById('bead-container').classList.remove('goal-reached'); }
+            } else if (document.getElementById('vib-on').checked && navigator.vibrate) { navigator.vibrate(60); }
             updateUI();
         }
 
         function updateUI() {
-            document.getElementById('current-count').innerText = (target === 0) ? count : (target - count < 0 ? 0 : target - count);
-            document.getElementById('target-label').innerText = (target === 0) ? "ΕΛΕΥΘΕΡΟ" : "ΥΠΟΛΟΙΠΟ";
+            const d = document.getElementById('current-count'), l = document.getElementById('target-label');
+            if (mode === 'knots') {
+                d.innerText = (target === 0) ? total : (target - count < 0 ? 0 : target - count);
+                l.innerText = (target === 0) ? "ΣΥΝΟΛΟ" : "ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ";
+            } else {
+                d.innerText = `${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}`;
+                l.innerText = "ΥΠΟΛΟΙΠΟ ΧΡΟΝΟΥ";
+            }
             document.getElementById('total').innerText = total;
-            document.getElementById('cycles').innerText = cycles;
         }
 
-        function resetCurrent() { count = 0; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
-        
-        function resetAll() { 
-            total = 0; cycles = 0; stopTimer();
-            document.getElementById('timer-display').innerText = "Διάρκεια: 0 λεπτά";
-            resetCurrent(); 
-        }
+        function resetCurrent() { count = 0; if (mode === 'timer') timerSeconds = (parseInt(document.getElementById('custom-input').value) || 0) * 60; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
+        function resetAll() { total = 0; clearInterval(timerInterval); timerInterval = null; resetCurrent(); }
         updateUI();
     </script>
 </body>
