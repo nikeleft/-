@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Κομποσκοίνι">
     
@@ -15,12 +14,17 @@
 
     <title>Ψηφιακὸν Κομποσκοίνι</title>
     <style>
-        * { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        * { 
+            -webkit-user-select: none; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+            box-sizing: border-box;
+        }
         
         body { 
             background-color: #0f0f0f; 
             color: #d4af37; 
-            font-family: 'Times New Roman', Times, serif; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
@@ -28,7 +32,7 @@
             height: 100vh; 
             margin: 0; 
             overflow: hidden; 
-            touch-action: manipulation; 
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
         }
 
         #splash-screen {
@@ -42,31 +46,30 @@
             z-index: 9999;
             transition: opacity 0.8s ease;
         }
-        #splash-screen img { max-width: 80%; max-height: 80%; object-fit: contain; }
+        #splash-screen img { max-width: 75%; max-height: 75%; object-fit: contain; }
 
         #dim-overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: #000000;
+            background: #000;
             z-index: 9000;
             display: none;
-            cursor: pointer;
         }
 
-        #prayer-text { font-size: 1.8rem; text-align: center; margin-bottom: 20px; padding: 0 20px; min-height: 4.5rem; line-height: 1.3; color: #d4af37; }
+        #prayer-text { font-size: 1.6rem; text-align: center; margin-bottom: 15px; padding: 0 25px; min-height: 4rem; color: #d4af37; }
         
         .controls { 
-            margin-bottom: 20px; 
             background: rgba(212, 175, 55, 0.05); 
-            padding: 20px 15px; 
-            border-radius: 15px; 
-            width: 85%; 
-            max-width: 320px; 
+            padding: 15px; 
+            border-radius: 20px; 
+            width: 88%; 
+            max-width: 340px; 
             border: 1px solid #d4af37; 
             display: flex;
             flex-direction: column;
-            align-items: center; /* Κεντράρισμα όλων των στοιχείων */
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         select, input[type="number"] { 
@@ -74,12 +77,10 @@
             color: #d4af37; 
             border: 1px solid #d4af37; 
             padding: 12px; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             width: 100%; 
-            font-size: 1.1rem; 
-            font-family: inherit; 
+            font-size: 16px; /* Υποχρεωτικό 16px για να μην κάνει zoom το iPhone */
             margin-bottom: 12px; 
-            outline: none;
             text-align: center;
         }
 
@@ -87,60 +88,49 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Κεντράρισμα των radio buttons */
-            gap: 12px;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 15px;
         }
 
         .vibration-toggle { 
             display: flex; 
             align-items: center; 
-            justify-content: center; /* Κεντράρισμα περιεχομένου toggle */
+            justify-content: center; 
             gap: 10px; 
-            font-size: 0.95rem; 
-            color: #d4af37; 
+            font-size: 0.9rem; 
             cursor: pointer;
             width: 100%;
         }
 
-        input[type="radio"] { accent-color: #d4af37; transform: scale(1.3); margin: 0; }
-
         #bead-container { 
-            width: 250px; height: 250px; border-radius: 50%; 
+            width: 240px; height: 240px; border-radius: 50%; 
             background: radial-gradient(circle, #1a1a1a 0%, #000 100%); 
             border: 2px solid #d4af37; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            cursor: pointer; box-shadow: 0 10px 50px rgba(0,0,0,0.8); 
-            transition: transform 0.05s ease; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+            transition: transform 0.1s; 
         }
-        #bead-container:active { transform: scale(0.96); border-color: #fff; }
-        .cross-icon { width: 70px; height: 90px; fill: #d4af37; margin-bottom: 5px; }
-        #current-count { font-size: 3.5rem; font-weight: bold; color: #d4af37; line-height: 1; }
-        #target-label { font-size: 0.8rem; color: #d4af37; opacity: 0.6; letter-spacing: 2px; margin-top: 5px; text-align: center; }
+        
+        /* Εφέ πατήματος */
+        #bead-container:active { transform: scale(0.94); border-color: #fff; }
+
+        .cross-icon { width: 60px; height: 80px; fill: #d4af37; margin-bottom: 5px; }
+        #current-count { font-size: 3.5rem; font-weight: bold; line-height: 1; }
+        #target-label { font-size: 0.75rem; opacity: 0.7; letter-spacing: 1px; text-align: center; margin-top: 5px; }
 
         .dim-btn {
-            background: #d4af37;
-            color: #000;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 20px;
-            font-weight: bold;
-            width: 100%;
-            font-family: inherit;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            cursor: pointer;
+            background: #d4af37; color: #000; border: none; padding: 12px;
+            border-radius: 25px; font-weight: bold; width: 100%; text-transform: uppercase;
         }
 
-        #stats { margin-top: 20px; text-align: center; font-size: 0.9rem; color: #d4af37; }
-        .reset-btn { margin-top: 10px; background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 8px 20px; border-radius: 20px; text-transform: uppercase; font-size: 0.8rem; cursor: pointer; }
-        .goal-reached { border-color: #fff !important; box-shadow: 0 0 60px rgba(212, 175, 55, 0.5) !important; }
+        .reset-btn { background: transparent; border: 1px solid #d4af37; color: #d4af37; padding: 8px 15px; border-radius: 20px; margin-top: 15px; font-size: 0.8rem; }
+        .goal-reached { border-color: #fff !important; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4) !important; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen"><img src="icon.png" alt="Splash Icon"></div>
-
+    <div id="splash-screen"><img src="icon.png" alt="Logo"></div>
     <div id="dim-overlay" onclick="countBead()" ontouchmove="handleSwipe(event)"></div>
 
     <div id="prayer-text">Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με</div>
@@ -149,25 +139,16 @@
         <select id="knot-select" onchange="updateSettings()">
             <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
-            <option value="300">300 κόμποι</option>
             <option value="custom">Επιλογή κόμπων</option>
             <option value="timer">Χρόνος (λεπτά)</option>
             <option value="free">Χωρίς στόχο</option>
         </select>
-        
-        <input type="number" id="custom-input" placeholder="Αριθμός..." style="display:none;" oninput="updateSettings()">
+        <input type="number" id="custom-input" placeholder="Δώστε αριθμό..." style="display:none;" oninput="updateSettings()">
 
         <div class="vibration-options">
-            <label class="vibration-toggle">
-                <input type="radio" name="vib" id="vib-on"> 
-                <span>Δόνηση σε κάθε κόμπο</span>
-            </label>
-            <label class="vibration-toggle">
-                <input type="radio" name="vib" id="vib-off"> 
-                <span>Μόνο στον τερματισμό</span>
-            </label>
+            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-on"> <span>Δόνηση σε κάθε κόμπο</span></label>
+            <label class="vibration-toggle"><input type="radio" name="vib" id="vib-off"> <span>Μόνο στον τερματισμό</span></label>
         </div>
-        
         <button class="dim-btn" onclick="toggleDim(true)">Χαμηλός Φωτισμός</button>
     </div>
 
@@ -177,82 +158,76 @@
         <span id="target-label">ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ</span>
     </div>
 
-    <div id="stats">
-        ΣΥΝΟΛΟ ΚΟΜΠΩΝ: <span id="total">0</span><br>
+    <div style="text-align:center; margin-top:15px; font-size:0.8rem; opacity:0.8;">
+        ΣΥΝΟΛΟ: <span id="total">0</span><br>
         <button class="reset-btn" onclick="resetAll()">Μηδενισμός</button>
     </div>
 
-    <script>
-        let count = 0, total = 0, target = 33, wakeLock = null;
-        let mode = 'knots', timerSeconds = 0, timerInterval = null, touchStartY = 0;
+    <audio id="click-sound" src="click.mp3" preload="auto"></audio>
 
+    <script>
+        let count = 0, total = 0, target = 33, mode = 'knots', timerSeconds = 0, timerInterval = null, touchStartY = 0;
+        const clickSound = document.getElementById('click-sound');
+
+        // Splash screen removal
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                const splash = document.getElementById('splash-screen');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 800);
-            }, 3000);
+            setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; 
+            setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800); }, 2500);
         });
 
-        document.addEventListener('touchstart', async (e) => {
-            touchStartY = e.touches[0].clientY;
-            if (!wakeLock && 'wakeLock' in navigator) {
-                try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
-            }
-        }, { passive: false });
+        // iPhone Wake Lock hack (συνεχές μικρό video ή κίνηση αν χρειαζόταν, εδώ χρησιμοποιούμε touch interaction)
+        document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
 
         function toggleDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
-        function handleSwipe(e) { if (Math.abs(touchStartY - e.touches[0].clientY) > 50) toggleDim(false); }
+        function handleSwipe(e) { if (Math.abs(touchStartY - e.touches[0].clientY) > 60) toggleDim(false); }
 
         function updateSettings() {
             const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
             clearInterval(timerInterval); timerInterval = null;
             if (s.value === 'timer') {
-                mode = 'timer'; c.style.display = 'block'; c.placeholder = "Λεπτά...";
-                target = parseInt(c.value) || 0; timerSeconds = target * 60;
+                mode = 'timer'; c.style.display = 'block'; target = parseInt(c.value) || 0; timerSeconds = target * 60;
             } else {
                 mode = 'knots'; c.style.display = (s.value === 'custom') ? 'block' : 'none';
-                c.placeholder = "Αριθμός κόμπων...";
-                target = (s.value === 'free') ? 0 : (s.value === 'custom' ? (parseInt(c.value) || 0) : parseInt(s.value));
+                target = (s.value === 'free') ? 0 : (parseInt(s.value === 'custom' ? c.value : s.value) || 0);
             }
             resetCurrent();
         }
 
-        function startTimer() {
+        function countBead() {
+            // Play sound (iPhone needs user interaction first, which this is)
+            clickSound.currentTime = 0;
+            clickSound.play().catch(() => {}); // ignore errors if file missing
+
             if (mode === 'timer' && !timerInterval && timerSeconds > 0) {
                 timerInterval = setInterval(() => {
-                    timerSeconds--;
+                    timerSeconds--; 
                     if (timerSeconds <= 0) { clearInterval(timerInterval); finishSession(); }
                     updateUI();
                 }, 1000);
             }
-        }
 
-        function finishSession() {
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-            document.getElementById('bead-container').classList.add('goal-reached');
-        }
-
-        function countBead() {
-            if (mode === 'timer') startTimer();
             total++;
             if (mode === 'knots') {
                 count++;
                 const vOn = document.getElementById('vib-on').checked, vOff = document.getElementById('vib-off').checked;
                 if (navigator.vibrate) {
-                    if (target > 0 && count === target) {
-                        if (vOn || vOff) finishSession();
-                    } else if (vOn) { navigator.vibrate(60); }
+                    if (target > 0 && count === target) { if (vOn || vOff) finishSession(); }
+                    else if (vOn) { navigator.vibrate(60); }
                 }
                 if (target > 0 && count > target) { count = 1; document.getElementById('bead-container').classList.remove('goal-reached'); }
             } else if (document.getElementById('vib-on').checked && navigator.vibrate) { navigator.vibrate(60); }
             updateUI();
         }
 
+        function finishSession() {
+            if (navigator.vibrate) navigator.vibrate([400, 200, 400]);
+            document.getElementById('bead-container').classList.add('goal-reached');
+        }
+
         function updateUI() {
             const d = document.getElementById('current-count'), l = document.getElementById('target-label');
             if (mode === 'knots') {
-                d.innerText = (target === 0) ? total : (target - count < 0 ? 0 : target - count);
+                d.innerText = (target === 0) ? total : Math.max(0, target - count);
                 l.innerText = (target === 0) ? "ΣΥΝΟΛΟ" : "ΥΠΟΛΟΙΠΟ ΚΟΜΠΩΝ";
             } else {
                 d.innerText = `${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}`;
@@ -263,7 +238,6 @@
 
         function resetCurrent() { count = 0; if (mode === 'timer') timerSeconds = (parseInt(document.getElementById('custom-input').value) || 0) * 60; document.getElementById('bead-container').classList.remove('goal-reached'); updateUI(); }
         function resetAll() { total = 0; clearInterval(timerInterval); timerInterval = null; resetCurrent(); }
-        updateUI();
     </script>
 </body>
 </html>
