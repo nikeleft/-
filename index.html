@@ -56,7 +56,6 @@
         .nav-btn { background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; color: #d4af37; padding: 10px 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; }
         input, select { background: #1a1a1a; color: #fff; border: 1px solid #d4af37; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 15px; font-family: inherit; font-size: 1rem; outline: none; }
         
-        /* Στοίχιση Δόνησης */
         .vib-option { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; cursor: pointer; padding: 5px 0; }
         .vib-option input { width: 22px; height: 22px; margin: 0; cursor: pointer; }
 
@@ -120,11 +119,11 @@
         
         <label style="display:block; margin: 20px 0 10px;">Δόνηση</label>
         <label class="vib-option">
-            <input type="checkbox" id="vib-on" onclick="saveVib('on')"> 
+            <input type="checkbox" id="vib-on" onchange="saveVib('on')"> 
             <span>Σὲ κάθε κόμπο</span>
         </label>
         <label class="vib-option">
-            <input type="checkbox" id="vib-off" onclick="saveVib('off')"> 
+            <input type="checkbox" id="vib-off" onchange="saveVib('off')"> 
             <span>Μόνο στον τερματισμό</span>
         </label>
     </div>
@@ -139,23 +138,21 @@
     </div>
 
     <script>
+        // Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {
                 navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGU9Pnt9KTs=');
             });
         }
 
+        // Φόρτωση Δεδομένων
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
         let target = parseInt(localStorage.getItem('target')) || 33;
         let targetType = localStorage.getItem('targetType') || 'knots';
         
-        const defaultPrayers = [
-            "Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", 
-            "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς",
-            "Ἅγιε τοῦ Θεοῦ,<br>πρέσβευε ὑπὲρ ἡμῶν"
-        ];
+        const defaultPrayers = ["Κύριε Ἰησοῦ Χριστέ,<br>ἐλέησόν με", "Ὑπεραγία Θεοτόκε,<br>σῶσον ἡμᾶς", "Ἅγιε τοῦ Θεοῦ,<br>πρέσβευε ὑπὲρ ἡμῶν"];
         let prayers = JSON.parse(localStorage.getItem('my_prayers')) || [...defaultPrayers];
         let pIndex = 0;
 
@@ -231,19 +228,16 @@
         }
 
         function saveVib(type) {
-            if(type === 'on') {
-                let val = document.getElementById('vib-on').checked;
-                localStorage.setItem('vib_on', val);
-                if(val) { document.getElementById('vib-off').checked = false; localStorage.setItem('vib_off', false); }
-            } else {
-                let val = document.getElementById('vib-off').checked;
-                localStorage.setItem('vib_off', val);
-                if(val) { document.getElementById('vib-on').checked = false; localStorage.setItem('vib_on', false); }
-            }
+            const vOn = document.getElementById('vib-on');
+            const vOff = document.getElementById('vib-off');
+            if(type === 'on' && vOn.checked) vOff.checked = false;
+            if(type === 'off' && vOff.checked) vOn.checked = false;
+            localStorage.setItem('vib_on', vOn.checked);
+            localStorage.setItem('vib_off', vOff.checked);
         }
 
         function resetAll() {
-            if(confirm("Θέλετε να μηδενίσετε την πρόοδο;")) {
+            if(confirm("Θέλετε να μηδενίσετε την πρόοδο και τις ρυθμίσεις;")) {
                 localStorage.clear();
                 location.reload();
             }
@@ -254,6 +248,7 @@
             if(show) startTimer();
         }
 
+        // Swipes
         let sX = 0;
         document.body.addEventListener('touchstart', e => sX = e.touches[0].clientX);
         document.body.addEventListener('touchend', e => {
@@ -280,16 +275,27 @@
             `).join('');
         }
 
+        // Η ΚΑΡΔΙΑ ΤΗΣ ΜΝΗΜΗΣ: Φορτώνει τις ρυθμίσεις στα UI elements
         window.onload = () => {
             setTimeout(() => document.getElementById('splash-screen').style.opacity='0', 500);
             document.getElementById('prayer-text').innerHTML = prayers[0];
+            
+            // Φόρτωση Δόνησης
             document.getElementById('vib-on').checked = localStorage.getItem('vib_on') === 'true';
             document.getElementById('vib-off').checked = localStorage.getItem('vib_off') === 'true';
             
+            // Φόρτωση Κανόνα στο Select
             let knotSel = document.getElementById('knot-select');
-            if(target === 0) knotSel.value = 'free';
-            else if([33, 100, 300].includes(target)) knotSel.value = target;
-            else { knotSel.value = 'custom'; document.getElementById('custom-input').style.display = 'block'; document.getElementById('custom-input').value = target; }
+            let customInp = document.getElementById('custom-input');
+            if(target === 0) {
+                knotSel.value = 'free';
+            } else if([33, 100, 300].includes(target)) {
+                knotSel.value = target;
+            } else {
+                knotSel.value = 'custom';
+                customInp.style.display = 'block';
+                customInp.value = target;
+            }
             
             updateUI();
         };
