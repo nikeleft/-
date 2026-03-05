@@ -17,7 +17,7 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
-        /* Πολύ Μεγάλο Splash Screen */
+        /* Large Splash Screen */
         #splash-screen { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #0f0f0f; display: flex; align-items: center; justify-content: center; 
@@ -33,14 +33,23 @@
 
         .settings-container { 
             width: 100%; max-width: 350px; margin: 5px auto 10px; border: 1px solid #d4af37; 
-            border-radius: 15px; background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); overflow: hidden; z-index: 10;
+            border-radius: 15px; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(12px); overflow: hidden; z-index: 10;
         }
         #settings-toggle { 
             width: 100%; padding: 12px; background: rgba(212, 175, 55, 0.15); color: #d4af37; 
             border: none; font-weight: bold; cursor: pointer; font-size: 0.9rem; font-family: inherit;
         }
-        #settings-content { max-height: 0; overflow-y: auto; transition: max-height 0.4s ease-out; }
-        #settings-content.open { max-height: 70vh; padding: 15px; }
+        /* Διόρθωση Scroll και Height */
+        #settings-content { 
+            max-height: 0; 
+            overflow-y: auto; 
+            transition: max-height 0.4s ease-out; 
+            -webkit-overflow-scrolling: touch;
+        }
+        #settings-content.open { 
+            max-height: 60vh; /* Περιορισμός ύψους για να μην βγαίνει εκτός οθόνης */
+            padding: 15px; 
+        }
 
         input[type="text"], select, input[type="number"] { 
             background: #1a1a1a; color: #d4af37; border: 1px solid #d4af37; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; text-align: center; font-size: 16px; outline: none; font-family: inherit;
@@ -48,14 +57,17 @@
 
         .section-box { border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 12px; margin-bottom: 12px; }
         .option-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.7; display: block; margin-bottom: 8px; text-align: center; letter-spacing: 1px; color: #fff; }
-        .toggle-row { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; margin-bottom: 8px; cursor: pointer; }
+        .toggle-row { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; margin-bottom: 10px; cursor: pointer; padding: 5px 0; }
 
         .prayer-item { display: flex; justify-content: space-between; align-items: center; background: rgba(212,175,55,0.1); padding: 8px 12px; border-radius: 6px; margin-bottom: 5px; font-size: 0.85rem; }
         .del-btn { color: #ff4444; font-weight: bold; padding: 5px 10px; cursor: pointer; }
 
+        /* Προσθήκη κενού στο τέλος για να φαίνονται όλα */
+        .bottom-spacer { height: 20px; }
+
         #main-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
         #bead-container { 
-            width: 58vw; height: 58vw; max-width: 220px; max-height: 220px; border-radius: 50%; 
+            width: 58vw; height: 58vw; max-width: 210px; max-height: 210px; border-radius: 50%; 
             background: radial-gradient(circle, #2a2a2a 0%, #000 100%); border: 3px solid #d4af37; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             box-shadow: 0 10px 50px rgba(0,0,0,0.9); transition: transform 0.05s;
@@ -116,6 +128,8 @@
                 <label class="toggle-row"><input type="checkbox" id="vib-on" onclick="onlyOne(this,'vib')"> Σε κάθε κόμπο</label>
                 <label class="toggle-row"><input type="checkbox" id="vib-off" onclick="onlyOne(this,'vib')"> Μόνο στον τερματισμό</label>
             </div>
+
+            <div class="bottom-spacer"></div>
         </div>
     </div>
 
@@ -240,12 +254,8 @@
             const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
             mode = (s.value === 'timer') ? 'timer' : 'knots';
             c.style.display = (s.value === 'custom' || s.value === 'timer') ? 'block' : 'none';
-            
-            if (mode === 'timer') {
-                timerSeconds = (parseInt(c.value) || 0) * 60;
-            } else {
-                target = s.value === 'free' ? 0 : (s.value === 'custom' ? parseInt(c.value)||0 : parseInt(s.value));
-            }
+            if (mode === 'timer') { timerSeconds = (parseInt(c.value) || 0) * 60; } 
+            else { target = s.value === 'free' ? 0 : (s.value === 'custom' ? parseInt(c.value)||0 : parseInt(s.value)); }
             resetAll();
         }
 
