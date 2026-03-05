@@ -189,4 +189,63 @@
 
         function onlyOne(checkbox, group) {
             const list = ['vib-on', 'vib-off'];
-            list.forEach(id => { if(document.getElementById(id
+            list.forEach(id => { if(document.getElementById(id) !== checkbox) document.getElementById(id).checked = false; });
+        }
+
+        function countBead() {
+            const vOn = document.getElementById('vib-on').checked, vOff = document.getElementById('vib-off').checked;
+
+            if (mode === 'timer' && !timerInterval && timerSeconds > 0) {
+                timerInterval = setInterval(() => { 
+                    timerSeconds--; 
+                    if (timerSeconds <= 0) { clearInterval(timerInterval); timerInterval = null; if (navigator.vibrate && (vOn || vOff)) navigator.vibrate([400, 200, 400]); } 
+                    updateUI(); 
+                }, 1000);
+            }
+
+            total++;
+            if (mode === 'knots') {
+                count++;
+                if (target > 0 && count === target) {
+                    if (navigator.vibrate && (vOn || vOff)) navigator.vibrate([400, 200, 400]);
+                    count = 0;
+                } else {
+                    if (navigator.vibrate && vOn) navigator.vibrate(60);
+                }
+            } else {
+                if (navigator.vibrate && vOn) navigator.vibrate(60);
+            }
+            updateUI();
+        }
+
+        function updateUI() {
+            const d = document.getElementById('current-count');
+            const lbl = document.getElementById('label-text');
+            if (mode === 'timer') {
+                d.innerText = `${Math.floor(timerSeconds/60)}:${(timerSeconds%60).toString().padStart(2,'0')}`;
+                lbl.innerText = "ΧΡΟΝΟΣ";
+            } else {
+                d.innerText = (target > 0) ? Math.max(0, target - count) : total;
+                lbl.innerText = (target > 0) ? "ΥΠΟΛΟΙΠΟ" : "ΣΥΝΟΛΟ";
+            }
+            document.getElementById('total').innerText = total;
+        }
+
+        function updateSettings() {
+            const s = document.getElementById('knot-select'), c = document.getElementById('custom-input');
+            mode = (s.value === 'timer') ? 'timer' : 'knots';
+            c.style.display = (s.value === 'custom' || s.value === 'timer') ? 'block' : 'none';
+            if (mode === 'timer') { timerSeconds = (parseInt(c.value) || 0) * 60; } 
+            else { target = s.value === 'free' ? 0 : (s.value === 'custom' ? parseInt(c.value)||0 : parseInt(s.value)); }
+            resetAll();
+        }
+
+        function resetAll() { count = 0; total = 0; if(timerInterval) { clearInterval(timerInterval); timerInterval = null; } updateUI(); }
+
+        window.addEventListener('load', () => {
+            updatePrayerDisplay();
+            setTimeout(() => { document.getElementById('splash-screen').style.opacity = '0'; setTimeout(() => document.getElementById('splash-screen').style.display = 'none', 800); }, 2500);
+        });
+    </script>
+</body>
+</html>
