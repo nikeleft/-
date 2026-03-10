@@ -26,13 +26,17 @@
         }
         #splash-text { font-size: 2.8rem; color: #d4af37; font-weight: bold; letter-spacing: 2px; }
 
-        #dim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 90000; display: none; touch-action: none; }
+        #dim-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 90000; display: none; touch-action: none; 
+        }
 
-        #prayer-area { width: 100%; text-align: center; padding-top: 40px; flex-shrink: 0; min-height: 140px; z-index: 10; touch-action: auto; cursor: pointer; }
+        #prayer-area { width: 100%; text-align: center; padding-top: 40px; flex-shrink: 0; min-height: 140px; z-index: 10; touch-action: auto; cursor: pointer; overflow: hidden; }
+        
         #prayer-text { 
             font-size: 1.8rem; line-height: 1.4; min-height: 5rem; display: flex; 
             align-items: center; justify-content: center; padding: 0 20px; 
-            color: #d4af37; font-weight: bold; transition: transform 0.2s ease-out, opacity 0.2s;
+            color: #d4af37; font-weight: bold; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
             text-align: center; pointer-events: none;
         }
 
@@ -139,7 +143,11 @@
         let currentPrayerIdx = parseInt(localStorage.getItem('currentPrayerIdx')) || 0;
 
         let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
-        let touchStartX = 0;
+        let touchStartX = 0, touchStartY = 0;
+        let isDimmed = false;
+
+        const prayerTextElem = document.getElementById('prayer-text');
+        const dimOverlay = document.getElementById('dim-overlay');
 
         function updateUI() {
             const display = document.getElementById('current-count');
@@ -154,7 +162,7 @@
                 document.getElementById('cycles').innerText = cycles;
             }
             document.getElementById('total').innerText = total;
-            document.getElementById('prayer-text').innerHTML = customPrayers[currentPrayerIdx].replace(/,/g, ',<br>');
+            prayerTextElem.innerHTML = customPrayers[currentPrayerIdx].replace(/,/g, ',<br>');
         }
 
         function save() {
@@ -181,6 +189,21 @@
             save(); updateUI();
         }
 
+        function animatePrayerChange(direction) {
+            const offset = direction * 50;
+            prayerTextElem.style.opacity = '0';
+            prayerTextElem.style.transform = `translateX(${-offset}px)`;
+            
+            setTimeout(() => {
+                updateUI();
+                prayerTextElem.style.transform = `translateX(${offset}px)`;
+                setTimeout(() => {
+                    prayerTextElem.style.opacity = '1';
+                    prayerTextElem.style.transform = `translateX(0)`;
+                }, 50);
+            }, 150);
+        }
+
         function startTimer() {
             if(!isPaused) return;
             isPaused = false; startTime = Date.now();
@@ -198,16 +221,8 @@
         }
 
         function resetAll() { if(confirm("Μηδενισμός;")) { count = 0; total = 0; cycles = 0; save(); updateUI(); } }
-        
-        function updateSettings() {
-            target = document.getElementById('knot-select').value;
-            count = 0; save(); updateUI();
-        }
-
-        function updateVibrationSettings() {
-            vibrationMode = document.getElementById('vibration-select').value;
-            save();
-        }
+        function updateSettings() { target = document.getElementById('knot-select').value; count = 0; save(); updateUI(); }
+        function updateVibrationSettings() { vibrationMode = document.getElementById('vibration-select').value; save(); }
 
         function populatePrayerSelect() {
             const select = document.getElementById('prayer-select');
@@ -220,10 +235,7 @@
             });
         }
 
-        function updatePrayer() {
-            currentPrayerIdx = parseInt(document.getElementById('prayer-select').value);
-            save(); updateUI();
-        }
+        function updatePrayer() { currentPrayerIdx = parseInt(document.getElementById('prayer-select').value); save(); updateUI(); }
 
         function addNewPrayer() {
             const input = document.getElementById('new-prayer-input');
@@ -234,9 +246,12 @@
         }
 
         function togglePanel(id) { document.getElementById(id).classList.toggle('open'); }
-        function setDim(show) { document.getElementById('dim-overlay').style.display = show ? 'block' : 'none'; }
+        
+        function setDim(show) { 
+            isDimmed = show;
+            dimOverlay.style.display = show ? 'block' : 'none'; 
+        }
 
-        // ΑΡΧΙΚΟΠΟΙΗΣΗ
         window.addEventListener('load', () => {
             populatePrayerSelect();
             document.getElementById('knot-select').value = target;
@@ -250,13 +265,37 @@
             }, 3000);
         });
 
-        // Swipe change prayer
-        document.getElementById('prayer-area').addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
+        // SWIPE LOGIC ΓΙΑ ΤΟ PRAYER AREA (ΜΟΝΟ ΟΤΑΝ ΦΩΤΙΖΕΤΑΙ)
+        document.getElementById('prayer-area').addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
         document.getElementById('prayer-area').addEventListener('touchend', e => {
             let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 50) {
-                currentPrayerIdx = (currentPrayerIdx + 1) % customPrayers.length;
-                save(); updateUI(); populatePrayerSelect();
+                const direction = diff > 0 ? 1 : -1;
+                currentPrayerIdx = (currentPrayerIdx + direction + customPrayers.length) % customPrayers.length;
+                save();
+                animatePrayerChange(direction);
+                populatePrayerSelect();
+            }
+        });
+
+        // SWIPE & CLICK LOGIC ΓΙΑ ΤΗ ΣΚΟΤΕΙΝΗ ΟΘΟΝΗ
+        dimOverlay.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        dimOverlay.addEventListener('touchend', e => {
+            let diffX = Math.abs(touchStartX - e.changedTouches[0].screenX);
+            let diffY = Math.abs(touchStartY - e.changedTouches[0].screenY);
+            
+            // Αν γίνει οποιοδήποτε swipe (πάνω από 30px), φωτίζεται η οθόνη
+            if (diffX > 30 || diffY > 30) {
+                setDim(false);
+            } else {
+                // Αν είναι απλό κλικ, μετράει κόμπο
+                countBead();
             }
         });
     </script>
