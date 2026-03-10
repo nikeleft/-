@@ -27,13 +27,13 @@
 
         #prayer-area { 
             width: 100%; text-align: center; padding-top: 40px; flex-shrink: 0; min-height: 140px; 
-            touch-action: none; cursor: pointer;
+            touch-action: none; cursor: pointer; z-index: 10;
         }
         #prayer-text { 
             font-size: 1.6rem; line-height: 1.4; min-height: 5rem; display: flex; 
             align-items: center; justify-content: center; padding: 0 20px; 
             color: #d4af37; font-weight: 500; transition: transform 0.2s ease-out, opacity 0.2s;
-            text-align: center;
+            text-align: center; pointer-events: none;
         }
 
         #main-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; }
@@ -78,7 +78,7 @@
 
     <div id="main-area">
         <div id="bead-container" onclick="countBead()">
-            <span id="current-count">0</span>
+            <span id="current-count">100</span>
         </div>
 
         <div style="display:flex; gap:8px;">
@@ -101,11 +101,10 @@
 
     <div id="settings-panel" class="panel">
         <div class="panel-header"><h3>Ρυθμίσεις Κανόνα</h3><span style="cursor:pointer;font-size:1.5rem;" onclick="togglePanel('settings-panel')">✕</span></div>
-        
         <label>Επιλογὴ Κόμπων</label>
         <select id="knot-select" onchange="updateSettings()">
-            <option value="33">33 κόμποι</option>
             <option value="100">100 κόμποι</option>
+            <option value="33">33 κόμποι</option>
             <option value="300">300 κόμποι</option>
             <option value="free">Νά 'ναι εὐλογημένο (ἐλεύθερο)</option>
             <option value="custom">Επιλογή...</option>
@@ -133,33 +132,41 @@
     <script>
         window.stop();
 
-        let count = parseInt(localStorage.getItem('count')) || 0;
-        let total = parseInt(localStorage.getItem('total')) || 0;
-        let cycles = parseInt(localStorage.getItem('cycles')) || 0;
-        let target = localStorage.getItem('target') || "33";
-        // ΠΡΟΕΠΙΛΟΓΗ ΔΟΝΗΣΗΣ ΣΤΟΝ ΚΥΚΛΟ
-        let vibrationMode = localStorage.getItem('vibrationMode') || "cycle";
-        
-        // ΕΠΑΝΑΦΟΡΑ ΤΩΝ ΔΙΚΩΝ ΣΟΥ ΠΡΟΣΕΥΧΩΝ
-        const defaultPrayers = [
+        // 1. ΟΙ 3 ΠΡΟΣΕΥΧΕΣ ΣΟΥ
+        const myPrayers = [
             "Κύριε Ἰησοῦ Χριστέ, Υἱὲ τοῦ Θεοῦ, ἐλέησόν με τὸν ἁμαρτωλόν",
             "Ὑπεραγία Θεοτόκε, σῶσον ἡμᾶς",
             "Ἅγιοι τοῦ Θεοῦ, πρεσβεύσατε ὑπὲρ ἡμῶν"
         ];
-        
-        let customPrayers = JSON.parse(localStorage.getItem('customPrayers')) || defaultPrayers;
-        let currentPrayerIdx = parseInt(localStorage.getItem('currentPrayerIdx')) || 0;
-        let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
 
-        let touchStartX = 0;
-        let touchStartY = 0;
+        let count = parseInt(localStorage.getItem('count')) || 0;
+        let total = parseInt(localStorage.getItem('total')) || 0;
+        let cycles = parseInt(localStorage.getItem('cycles')) || 0;
+        let target = localStorage.getItem('target') || "100";
+        let vibrationMode = localStorage.getItem('vibrationMode') || "cycle";
+        
+        let storedPrayers = JSON.parse(localStorage.getItem('customPrayers'));
+        // Διασφάλιση ότι αν η μνήμη είναι κενή ή λανθασμένη, φορτώνονται οι δικές σου
+        let customPrayers = (storedPrayers && storedPrayers.length >= 3) ? storedPrayers : myPrayers;
+        let currentPrayerIdx = parseInt(localStorage.getItem('currentPrayerIdx')) || 0;
+        if (currentPrayerIdx >= customPrayers.length) currentPrayerIdx = 0;
+
+        let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
+        let touchStartX = 0, touchStartY = 0;
+
         const prayerArea = document.getElementById('prayer-area');
         const prayerText = document.getElementById('prayer-text');
         const dimOverlay = document.getElementById('dim-overlay');
 
-        prayerArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: false});
-        prayerArea.addEventListener('touchmove', e => { e.preventDefault(); }, {passive: false});
-        prayerArea.addEventListener('touchend', e => { handleSwipe(e.changedTouches[0].screenX); }, {passive: false});
+        // SWIPE ΛΕΙΤΟΥΡΓΙΑ
+        prayerArea.addEventListener('touchstart', e => { 
+            touchStartX = e.changedTouches[0].screenX; 
+        }, {passive: true});
+
+        prayerArea.addEventListener('touchend', e => { 
+            let touchEndX = e.changedTouches[0].screenX;
+            handleSwipe(touchEndX); 
+        }, {passive: true});
 
         dimOverlay.addEventListener('touchstart', e => { 
             touchStartX = e.changedTouches[0].screenX; 
@@ -169,15 +176,12 @@
         dimOverlay.addEventListener('touchend', e => {
             let endX = e.changedTouches[0].screenX;
             let endY = e.changedTouches[0].screenY;
-            if (Math.abs(endX - touchStartX) > 40 || Math.abs(endY - touchStartY) > 40) {
-                setDim(false);
-            } else {
-                countBead();
-            }
+            if (Math.abs(endX - touchStartX) > 40 || Math.abs(endY - touchStartY) > 40) setDim(false);
+            else countBead();
         }, {passive: false});
 
         function handleSwipe(endX) {
-            const threshold = 50;
+            const threshold = 40;
             if (touchStartX - endX > threshold) {
                 currentPrayerIdx = (currentPrayerIdx + 1) % customPrayers.length;
                 animatePrayerChange('left');
@@ -199,7 +203,7 @@
                     prayerText.style.opacity = "1";
                     prayerText.style.transform = "translateX(0)";
                 }, 50);
-            }, 200);
+            }, 150);
         }
 
         function save() {
@@ -215,7 +219,6 @@
         function countBead() {
             if(isPaused) startTimer();
             count++; total++;
-            
             if(target !== "free") {
                 let t = parseInt(target);
                 if(count >= t) { 
@@ -225,12 +228,8 @@
                         for(let i=0; i<cycles; i++){ pattern.push(300); pattern.push(200); }
                         navigator.vibrate(pattern);
                     }
-                } else { 
-                    if (vibrationMode === "all") navigator.vibrate(40); 
-                }
-            } else { 
-                if (vibrationMode === "all") navigator.vibrate(40); 
-            }
+                } else if (vibrationMode === "all") navigator.vibrate(40);
+            } else if (vibrationMode === "all") navigator.vibrate(40);
             save(); updateUI();
         }
 
@@ -263,14 +262,11 @@
 
         function toggleTimer() {
             if(isPaused) startTimer();
-            else {
-                isPaused = true; elapsedAtPause += (Date.now() - startTime);
-                clearInterval(timerInterval);
-                document.getElementById('timer-toggle').innerText = "▶";
-            }
+            else { isPaused = true; elapsedAtPause += (Date.now() - startTime); clearInterval(timerInterval); document.getElementById('timer-toggle').innerText = "▶"; }
         }
 
         function resetAll() {
+            if(!confirm("Θέλετε να μηδενίσετε τον κανόνα;")) return;
             count = 0; total = 0; cycles = 0; elapsedAtPause = 0;
             if(timerInterval) clearInterval(timerInterval);
             isPaused = true;
@@ -281,55 +277,43 @@
 
         function updateSettings() {
             const s = document.getElementById('knot-select'), ci = document.getElementById('custom-input');
-            if(s.value === 'custom') { ci.style.display = 'block'; target = ci.value || "33"; }
-            else if(s.value === 'free') { ci.style.display = 'none'; target = "free"; }
+            if(s.value === 'custom') { ci.style.display = 'block'; target = ci.value || "100"; }
             else { ci.style.display = 'none'; target = s.value; }
             count = 0; save(); updateUI();
         }
 
-        function updateVibrationSettings() {
-            vibrationMode = document.getElementById('vibration-select').value;
-            save();
-        }
+        function updateVibrationSettings() { vibrationMode = document.getElementById('vibration-select').value; save(); }
 
         function populatePrayerSelect() {
             const select = document.getElementById('prayer-select');
             select.innerHTML = "";
             customPrayers.forEach((p, index) => {
                 let opt = document.createElement('option');
-                opt.value = index;
-                opt.innerText = p;
+                opt.value = index; opt.innerText = p;
                 if(index === currentPrayerIdx) opt.selected = true;
                 select.appendChild(opt);
             });
         }
 
-        function updatePrayer() {
-            currentPrayerIdx = parseInt(document.getElementById('prayer-select').value);
-            save(); updateUI();
-        }
+        function updatePrayer() { currentPrayerIdx = parseInt(document.getElementById('prayer-select').value); save(); updateUI(); }
 
         function addNewPrayer() {
             const input = document.getElementById('new-prayer-input');
             if(input.value.trim() !== "") {
                 customPrayers.push(input.value.trim());
-                input.value = "";
-                populatePrayerSelect();
-                save();
+                input.value = ""; populatePrayerSelect(); save();
             }
         }
 
         function setDim(show) { dimOverlay.style.display = show ? 'block' : 'none'; }
+        function togglePanel(id) { document.getElementById(id).classList.toggle('open'); }
 
         window.onload = () => {
             populatePrayerSelect();
             document.getElementById('knot-select').value = target;
             document.getElementById('vibration-select').value = vibrationMode;
-            if(target === "custom") document.getElementById('custom-input').style.display = 'block';
             updateUI();
         };
-
-        function togglePanel(id) { document.getElementById(id).classList.toggle('open'); }
     </script>
 </body>
 </html>
