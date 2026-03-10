@@ -30,9 +30,9 @@
             touch-action: auto; cursor: pointer; z-index: 10;
         }
         #prayer-text { 
-            font-size: 1.6rem; line-height: 1.4; min-height: 5rem; display: flex; 
+            font-size: 1.8rem; line-height: 1.4; min-height: 5rem; display: flex; 
             align-items: center; justify-content: center; padding: 0 20px; 
-            color: #d4af37; font-weight: 500; transition: transform 0.2s ease-out, opacity 0.2s;
+            color: #d4af37; font-weight: bold; transition: transform 0.2s ease-out, opacity 0.2s;
             text-align: center; pointer-events: none;
         }
 
@@ -132,9 +132,9 @@
     <script>
         window.stop();
 
-        // ΕΔΩ ΕΙΝΑΙ ΟΙ 3 ΠΡΟΣΕΥΧΕΣ ΣΟΥ - ΕΙΝΑΙ ΠΛΕΟΝ ΚΑΙ ΠΡΟΚΑΘΟΡΙΣΜΕΝΕΣ
+        // Η ΝΕΑ ΣΥΝΤΟΜΗ ΠΡΟΣΕΥΧΗ
         const myPrayers = [
-            "Κύριε Ἰησοῦ Χριστέ, Υἱὲ τοῦ Θεοῦ, ἐλέησόν με τὸν ἁμαρτωλόν",
+            "Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με",
             "Ὑπεραγία Θεοτόκε, σῶσον ἡμᾶς",
             "Ἅγιοι τοῦ Θεοῦ, πρεσβεύσατε ὑπὲρ ἡμῶν"
         ];
@@ -146,8 +146,13 @@
         let vibrationMode = localStorage.getItem('vibrationMode') || "cycle";
         
         let storedPrayers = JSON.parse(localStorage.getItem('customPrayers'));
-        // Αν οι αποθηκευμένες προσευχές είναι λιγότερες από 3, βάλε τις δικές σου
-        let customPrayers = (storedPrayers && storedPrayers.length >= 3) ? storedPrayers : myPrayers;
+        let customPrayers = (storedPrayers && storedPrayers.length >= 1) ? storedPrayers : myPrayers;
+        
+        // Αν η πρώτη προσευχή δεν είναι η νέα σύντομη, την επιβάλλουμε
+        if(customPrayers[0] !== myPrayers[0]) {
+            customPrayers = myPrayers;
+        }
+
         let currentPrayerIdx = parseInt(localStorage.getItem('currentPrayerIdx')) || 0;
         if (currentPrayerIdx >= customPrayers.length) currentPrayerIdx = 0;
 
@@ -158,23 +163,12 @@
         const prayerText = document.getElementById('prayer-text');
         const dimOverlay = document.getElementById('dim-overlay');
 
-        // ΕΠΙΔΙΟΡΘΩΣΗ SWIPE
-        prayerArea.addEventListener('touchstart', e => { 
-            touchStartX = e.changedTouches[0].screenX; 
-        }, {passive: true});
+        prayerArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+        prayerArea.addEventListener('touchend', e => { handleSwipe(e.changedTouches[0].screenX); }, {passive: true});
 
-        prayerArea.addEventListener('touchend', e => { 
-            handleSwipe(e.changedTouches[0].screenX); 
-        }, {passive: true});
-
-        dimOverlay.addEventListener('touchstart', e => { 
-            touchStartX = e.changedTouches[0].screenX; 
-            touchStartY = e.changedTouches[0].screenY; 
-        }, {passive: false});
-
+        dimOverlay.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: false});
         dimOverlay.addEventListener('touchend', e => {
-            let endX = e.changedTouches[0].screenX;
-            let endY = e.changedTouches[0].screenY;
+            let endX = e.changedTouches[0].screenX, endY = e.changedTouches[0].screenY;
             if (Math.abs(endX - touchStartX) > 40 || Math.abs(endY - touchStartY) > 40) setDim(false);
             else countBead();
         }, {passive: false});
@@ -244,6 +238,7 @@
                 document.getElementById('cycles').innerText = cycles;
             }
             document.getElementById('total').innerText = total;
+            // Εμφάνιση προσευχής
             prayerText.innerHTML = customPrayers[currentPrayerIdx].replace(/,/g, ',<br>');
         }
 
@@ -311,7 +306,7 @@
             populatePrayerSelect();
             document.getElementById('knot-select').value = target;
             document.getElementById('vibration-select').value = vibrationMode;
-            updateUI();
+            updateUI(); // Τρέχει αμέσως για να φανεί η προσευχή
         };
     </script>
 </body>
