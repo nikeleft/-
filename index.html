@@ -114,8 +114,8 @@
 
         <label style="margin-top: 15px; display: block;">Ρύθμιση Δόνησης</label>
         <select id="vibration-select" onchange="updateVibrationSettings()">
-            <option value="all">Σε κάθε κόμπο</option>
             <option value="cycle">Μόνο στο τέλος του κύκλου</option>
+            <option value="all">Σε κάθε κόμπο</option>
             <option value="none">Καμία δόνηση</option>
         </select>
     </div>
@@ -131,17 +131,22 @@
     </div>
 
     <script>
+        window.stop();
+
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
         let target = localStorage.getItem('target') || "33";
-        let vibrationMode = localStorage.getItem('vibrationMode') || "all"; 
+        // ΠΡΟΕΠΙΛΟΓΗ ΔΟΝΗΣΗΣ ΣΤΟΝ ΚΥΚΛΟ
+        let vibrationMode = localStorage.getItem('vibrationMode') || "cycle";
         
+        // ΕΠΑΝΑΦΟΡΑ ΤΩΝ ΔΙΚΩΝ ΣΟΥ ΠΡΟΣΕΥΧΩΝ
         const defaultPrayers = [
-            "Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με",
+            "Κύριε Ἰησοῦ Χριστέ, Υἱὲ τοῦ Θεοῦ, ἐλέησόν με τὸν ἁμαρτωλόν",
             "Ὑπεραγία Θεοτόκε, σῶσον ἡμᾶς",
-            "Ἅγιε/α ..., πρέσβευε ὑπὲρ ἐμοῦ"
+            "Ἅγιοι τοῦ Θεοῦ, πρεσβεύσατε ὑπὲρ ἡμῶν"
         ];
+        
         let customPrayers = JSON.parse(localStorage.getItem('customPrayers')) || defaultPrayers;
         let currentPrayerIdx = parseInt(localStorage.getItem('currentPrayerIdx')) || 0;
         let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
