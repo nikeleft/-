@@ -19,6 +19,14 @@
             padding: env(safe-area-inset-top) 15px env(safe-area-inset-bottom) 15px;
         }
 
+        /* SPLASH SCREEN ΜΟΝΟ ΜΕ ΧΡΥΣΑΦΙ ΚΕΙΜΕΝΟ */
+        #splash-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0a0a0a; display: flex; align-items: center; justify-content: center; 
+            z-index: 99999; transition: opacity 0.8s ease; 
+        }
+        #splash-text { font-size: 2.5rem; color: #d4af37; letter-spacing: 3px; font-weight: bold; }
+
         #dim-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: #000; z-index: 90000; display: none; 
@@ -69,6 +77,10 @@
     </style>
 </head>
 <body>
+
+    <div id="splash-screen">
+        <div id="splash-text">Κομποσκοίνι</div>
+    </div>
 
     <div id="dim-overlay"></div>
 
@@ -141,13 +153,12 @@
         let count = parseInt(localStorage.getItem('count')) || 0;
         let total = parseInt(localStorage.getItem('total')) || 0;
         let cycles = parseInt(localStorage.getItem('cycles')) || 0;
-        let target = localStorage.getItem('target') || "100";
+        let target = localStorage.getItem('target') || "100"; // Πάντα 100 ως βάση
         let vibrationMode = localStorage.getItem('vibrationMode') || "cycle";
         
         let storedPrayers = JSON.parse(localStorage.getItem('customPrayers'));
         let customPrayers = (storedPrayers && storedPrayers.length >= 1) ? storedPrayers : myPrayers;
         
-        // Επιβολή της νέας προσευχής αν είναι διαφορετική
         if(customPrayers[0] !== "Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με") {
             customPrayers[0] = "Κύριε Ἰησοῦ Χριστέ, ἐλέησόν με";
         }
@@ -162,7 +173,6 @@
         const prayerText = document.getElementById('prayer-text');
         const dimOverlay = document.getElementById('dim-overlay');
 
-        // ΑΜΕΣΗ ΕΝΗΜΕΡΩΣΗ UI ΜΕ ΤΗΝ ΕΝΑΡΞΗ ΤΟΥ SCRIPT
         function updateUI() {
             const display = document.getElementById('current-count');
             const cyclesDiv = document.getElementById('cycles-container');
@@ -178,7 +188,7 @@
             prayerText.innerHTML = customPrayers[currentPrayerIdx].replace(/,/g, ',<br>');
         }
 
-        // Τρέχουμε το UI αμέσως εδώ, πριν το onload
+        // ΑΜΕΣΗ ΕΜΦΑΝΙΣΗ
         updateUI();
 
         prayerArea.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
@@ -304,12 +314,19 @@
         function setDim(show) { dimOverlay.style.display = show ? 'block' : 'none'; }
         function togglePanel(id) { document.getElementById(id).classList.toggle('open'); }
 
-        window.onload = () => {
+        // ΕΓΓΥΗΜΕΝΗ ΛΕΙΤΟΥΡΓΙΑ SPLASH SCREEN
+        window.addEventListener('load', () => {
             populatePrayerSelect();
             document.getElementById('knot-select').value = target;
             document.getElementById('vibration-select').value = vibrationMode;
-            updateUI(); // Ξανά για σιγουριά μετά το φόρτωμα των στοιχείων
-        };
+            updateUI();
+            
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 800);
+            }, 3000);
+        });
     </script>
 </body>
 </html>
