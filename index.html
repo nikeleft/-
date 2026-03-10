@@ -144,7 +144,6 @@
 
         let isPaused = true, startTime = null, elapsedAtPause = 0, timerInterval;
         let touchStartX = 0, touchStartY = 0;
-        let isDimmed = false;
 
         const prayerTextElem = document.getElementById('prayer-text');
         const dimOverlay = document.getElementById('dim-overlay');
@@ -182,7 +181,15 @@
             if(target !== "free") {
                 if(count >= parseInt(target)) {
                     cycles++; count = 0;
-                    if(vibrationMode !== "none") navigator.vibrate([300, 200, 300]);
+                    // ΚΛΙΜΑΚΩΤΗ ΔΟΝΗΣΗ: x φορές όσοι οι κύκλοι
+                    if(vibrationMode !== "none") {
+                        let pattern = [];
+                        for(let i = 0; i < cycles; i++) {
+                            pattern.push(300); // διάρκεια δόνησης
+                            pattern.push(200); // παύση
+                        }
+                        navigator.vibrate(pattern);
+                    }
                 } else if(vibrationMode === "all") navigator.vibrate(40);
             } else if(vibrationMode === "all") navigator.vibrate(40);
             
@@ -217,10 +224,31 @@
 
         function toggleTimer() {
             if(isPaused) startTimer();
-            else { isPaused = true; elapsedAtPause += (Date.now() - startTime); clearInterval(timerInterval); document.getElementById('timer-toggle').innerText = "▶"; }
+            else { 
+                isPaused = true; 
+                elapsedAtPause += (Date.now() - startTime); 
+                clearInterval(timerInterval); 
+                document.getElementById('timer-toggle').innerText = "▶"; 
+            }
         }
 
-        function resetAll() { if(confirm("Μηδενισμός;")) { count = 0; total = 0; cycles = 0; save(); updateUI(); } }
+        function resetAll() { 
+            if(confirm("Θέλετε να μηδενίσετε τον κανόνα και τον χρόνο;")) { 
+                count = 0; 
+                total = 0; 
+                cycles = 0; 
+                // ΜΗΔΕΝΙΣΜΟΣ ΧΡΟΝΟΥ
+                isPaused = true;
+                elapsedAtPause = 0;
+                clearInterval(timerInterval);
+                document.getElementById('session-timer').innerText = "00:00:00";
+                document.getElementById('timer-toggle').innerText = "▶";
+                
+                save(); 
+                updateUI(); 
+            } 
+        }
+
         function updateSettings() { target = document.getElementById('knot-select').value; count = 0; save(); updateUI(); }
         function updateVibrationSettings() { vibrationMode = document.getElementById('vibration-select').value; save(); }
 
@@ -246,11 +274,7 @@
         }
 
         function togglePanel(id) { document.getElementById(id).classList.toggle('open'); }
-        
-        function setDim(show) { 
-            isDimmed = show;
-            dimOverlay.style.display = show ? 'block' : 'none'; 
-        }
+        function setDim(show) { dimOverlay.style.display = show ? 'block' : 'none'; }
 
         window.addEventListener('load', () => {
             populatePrayerSelect();
@@ -265,10 +289,7 @@
             }, 3000);
         });
 
-        // SWIPE LOGIC ΓΙΑ ΤΟ PRAYER AREA (ΜΟΝΟ ΟΤΑΝ ΦΩΤΙΖΕΤΑΙ)
-        document.getElementById('prayer-area').addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
+        document.getElementById('prayer-area').addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX);
         document.getElementById('prayer-area').addEventListener('touchend', e => {
             let diff = touchStartX - e.changedTouches[0].screenX;
             if (Math.abs(diff) > 50) {
@@ -280,7 +301,6 @@
             }
         });
 
-        // SWIPE & CLICK LOGIC ΓΙΑ ΤΗ ΣΚΟΤΕΙΝΗ ΟΘΟΝΗ
         dimOverlay.addEventListener('touchstart', e => {
             touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
@@ -289,14 +309,8 @@
         dimOverlay.addEventListener('touchend', e => {
             let diffX = Math.abs(touchStartX - e.changedTouches[0].screenX);
             let diffY = Math.abs(touchStartY - e.changedTouches[0].screenY);
-            
-            // Αν γίνει οποιοδήποτε swipe (πάνω από 30px), φωτίζεται η οθόνη
-            if (diffX > 30 || diffY > 30) {
-                setDim(false);
-            } else {
-                // Αν είναι απλό κλικ, μετράει κόμπο
-                countBead();
-            }
+            if (diffX > 30 || diffY > 30) setDim(false);
+            else countBead();
         });
     </script>
 </body>
